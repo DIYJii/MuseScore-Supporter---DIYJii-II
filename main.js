@@ -69,19 +69,34 @@
         const query = document.getElementById('ai-query').value;
         if(!query) return alert('Please enter a search query.');
         
-        /* 1. Correct Image URL */
-        const imgUrl = "https://vercel.app"; 
+        /* 1. 正しい画像URLを設定 */
+        const imgUrl = "https://muse-score-supporter-diy-jii-ii.vercel.app/Secret-prompt.png"; 
         const finalQuery = `${query} \n\nPlease follow the instructions in this image: ${imgUrl}`;
 
-        /* 2. Correct Google URL Structure */
-        const baseUrl = "https://google.com";
-        const params = new URLSearchParams({
-            q: finalQuery,
-            udm: "14", // "50" can sometimes fail; "14" is the standard for AI/Labs
-            hl: "en"
-        });
+        /* 2. 以前成功した「Form送信方式」を再現 */
+        const form = document.createElement('form');
+        form.method = 'GET';
+        form.action = 'https://google.com'; // searchを追加
+        form.target = '_blank';
 
-        window.open(`${baseUrl}?${params.toString()}`, '_blank');
+        // パラメータの設定
+        const p = { 
+            q: finalQuery, 
+            udm: '50', 
+            hl: 'en' 
+        };
+
+        for(let k in p) {
+            const i = document.createElement('input');
+            i.type = 'hidden'; 
+            i.name = k; 
+            i.value = p[k];
+            form.appendChild(i);
+        }
+
+        document.body.appendChild(form);
+        form.submit();
+        document.body.removeChild(form);
     }
 
 
