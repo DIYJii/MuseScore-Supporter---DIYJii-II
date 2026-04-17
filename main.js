@@ -1,67 +1,69 @@
 (function() {
-    const PANEL_WIDTH = '380px';
-    const PANEL_ID = 'my-ai-sidebar';
+    var PANEL_WIDTH = '380px';
+    var PANEL_ID = 'my-ai-sidebar';
 
     if (document.getElementById(PANEL_ID)) {
-        closePanel();
+        var existing = document.getElementById(PANEL_ID);
+        document.body.style.marginRight = '0px';
+        existing.remove();
         return;
     }
 
-    function closePanel() {
-        const p = document.getElementById(PANEL_ID);
-        if (p) {
-            document.body.style.marginRight = '0px';
-            p.style.transform = 'translateX(100%)';
-            setTimeout(() => p.remove(), 300);
-        }
-    }
-
-    // 安定化のため、少し余裕を持って描画を開始
-    setTimeout(() => {
+    // 1. 安定化のため500ms待機
+    setTimeout(function() {
         document.body.style.transition = 'margin-right 0.3s ease';
         document.body.style.marginRight = PANEL_WIDTH;
 
-        const panel = document.createElement('div');
+        var panel = document.createElement('div');
         panel.id = PANEL_ID;
-        Object.assign(panel.style, {
-            position: 'fixed', top: '0', right: '0', width: PANEL_WIDTH, height: '100%',
-            backgroundColor: '#ffffff', borderLeft: '1px solid #ddd',
-            boxShadow: '-4px 0 15px rgba(0,0,0,0.1)', zIndex: '2147483647',
-            padding: '0', boxSizing: 'border-box', fontFamily: 'sans-serif',
-            transition: 'transform 0.3s ease', transform: 'translateX(0)'
-        });
+        // 安全のためObject.assignを使わず直接指定
+        panel.style.position = 'fixed';
+        panel.style.top = '0';
+        panel.style.right = '0';
+        panel.style.width = PANEL_WIDTH;
+        panel.style.height = '100%';
+        panel.style.backgroundColor = '#ffffff';
+        panel.style.borderLeft = '1px solid #ddd';
+        panel.style.boxShadow = '-4px 0 15px rgba(0,0,0,0.1)';
+        panel.style.zIndex = '2147483647';
+        panel.style.fontFamily = 'sans-serif';
+        panel.style.transition = 'transform 0.3s ease';
 
-        panel.innerHTML = `
-            <div style="background:#f8f9fa; padding:15px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
-                <span style="font-weight:bold; color:#1a73e8;">AI Search Assistant</span>
-                <button id="close-x" style="cursor:pointer; border:none; background:none; font-size:24px; color:#999;">&times;</button>
-            </div>
-            <div style="padding:20px;">
-                <p style="font-size:12px; color:#666;">Instructions (PNG Prompt):</p>
-                <img src="https://muse-score-supporter-diy-jii-ii.vercel.app/secret-prompt.png" style="width:100%; border-radius:4px; margin-bottom:10px; border:1px solid #eee;">
-                <textarea id="ai-query" placeholder="Enter your search..." style="width:100%; height:120px; border:1px solid #ddd; border-radius:8px; padding:12px; font-size:14px; outline:none;"></textarea>
-                <button id="ai-submit" style="width:100%; margin-top:15px; padding:14px; background:#1a73e8; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold;">Launch Google AI</button>
-                <p style="font-size:11px; color:#999; margin-top:10px;">※ 画像プロンプトは自動的に添付されます</p>
-            </div>
-        `;
+        panel.innerHTML = 
+            '<div style="background:#f8f9fa; padding:15px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">' +
+                '<span style="font-weight:bold; color:#1a73e8;">AI Search Assistant</span>' +
+                '<button id="close-x" style="cursor:pointer; border:none; background:none; font-size:24px; color:#999;">&times;</button>' +
+            '</div>' +
+            '<div style="padding:20px;">' +
+                '<p style="font-size:12px; color:#666;">Instructions (PNG Prompt):</p>' +
+                '<img src="https://muse-score-supporter-diy-jii-ii.vercel.app/secret-prompt.png" style="width:100%; border-radius:4px; margin-bottom:10px; border:1px solid #eee;">' +
+                '<textarea id="ai-query" placeholder="Enter your search..." style="width:100%; height:120px; border:1px solid #ddd; border-radius:8px; padding:12px; font-size:14px; outline:none; resize:none;"></textarea>' +
+                '<button id="ai-submit" style="width:100%; margin-top:15px; padding:14px; background:#1a73e8; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold;">Launch Google AI</button>' +
+            '</div>';
 
         document.body.appendChild(panel);
-        document.getElementById('close-x').onclick = closePanel;
 
-        
-        document.getElementById('ai-submit').onclick = function() {
-            const query = document.getElementById('ai-query').value;
-            if(!query) return alert('Please enter a query.');
-
-            const imgUrl = = "https://muse-score-supporter-diy-jii-ii.vercel.app/secret-prompt.png";
-            
-            // AIが画像をURLとして認識しやすくするため、Markdown形式と直リンクを併記
-            const finalQuery = `Please follow the rules in this image: ${imgUrl} \n\n User Query: ${query}`;
-
-            // 修正ポイント: google.com の後に 「/search?q=」 を正確に追加
-            const searchUrl = 'https://google.com' + encodeURIComponent(finalQuery) + '&udm=50&hl=en';
-            
-            window.open(searchUrl, '_blank');
+        // 閉じるボタン
+        document.getElementById('close-x').onclick = function() {
+            document.body.style.marginRight = '0px';
+            panel.remove();
         };
-    }, 300); // 0.3秒待機して安定させる
+
+        // 2. 送信ボタン (URL組み立てを最も安全な方法に修正)
+        document.getElementById('ai-submit').onclick = function() {
+            var val = document.getElementById('ai-query').value;
+            if(!val) {
+                alert('Please enter a query.');
+                return;
+            }
+
+            var imgUrl = "https://muse-score-supporter-diy-jii-ii.vercel.app/secret-prompt.png";
+            var promptText = "Follow instructions in this image: " + imgUrl + "\n\nQuery: " + val;
+            
+            // 修正済みURL: ?q= を忘れずに追加
+            var finalUrl = "https://google.com" + encodeURIComponent(promptText) + "&udm=50&hl=en";
+            
+            window.open(finalUrl, '_blank');
+        };
+    }, 500);
 })();
