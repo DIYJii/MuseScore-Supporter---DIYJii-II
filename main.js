@@ -48,17 +48,20 @@
         document.body.appendChild(panel);
         document.getElementById('close-x').onclick = closePanel;
 
+        
         document.getElementById('ai-submit').onclick = function() {
             const query = document.getElementById('ai-query').value;
             if(!query) return alert('Please enter a query.');
 
-            const imgUrl = "https://muse-score-supporter-diy-jii-ii.vercel.app/secret-prompt.png";
-            // AIが画像を強制参照するようにプロンプトを構築
-            const finalQuery = `Reference this image for instructions: ${imgUrl} \n\n User's Request: ${query}`;
+            const imgUrl = = "https://muse-score-supporter-diy-jii-ii.vercel.app/secret-prompt.png";
+            
+            // AIが画像をURLとして認識しやすくするため、Markdown形式と直リンクを併記
+            const finalQuery = `Please follow the rules in this image: ${imgUrl} \n\n User Query: ${query}`;
 
-            // 新規タブでGoogle AI Search (Geminiモード) を開く
-            const searchUrl = `https://google.com{encodeURIComponent(finalQuery)}&udm=50&hl=en`;
+            // 修正ポイント: google.com の後に 「/search?q=」 を正確に追加
+            const searchUrl = 'https://google.com' + encodeURIComponent(finalQuery) + '&udm=50&hl=en';
+            
             window.open(searchUrl, '_blank');
         };
-    }, 500); // 0.5秒待機して安定させる
+    }, 300); // 0.3秒待機して安定させる
 })();
