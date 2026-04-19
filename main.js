@@ -39,7 +39,7 @@
             btn.innerText = "Syncing...";
 
             // mode: 'cors' を追加してキャッシュを回避
-            fetch('https://github.com/DIYJii/MuseScore-Supporter---DIYJii-II/blob/main/Prompt.txt?' + Date.now(), {
+            fetch('https://github.com/DIYJii/MuseScore-Supporter---DIYJii-II/commit/65a280b1861cd44634ccef77241b8c00669d2d66?' + Date.now(), {
                 mode: 'cors'
             })
                 .then(function(r) { 
