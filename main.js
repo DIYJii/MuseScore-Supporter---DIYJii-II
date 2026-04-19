@@ -30,23 +30,26 @@
 
         document.getElementById('close-x').onclick = function() { panel.remove(); };
 
-        document.getElementById('ai-submit').onclick = function() {
+                document.getElementById('ai-submit').onclick = function() {
             var btn = this;
             var userVal = document.getElementById('ai-query').value;
             if(!userVal) return alert('Please enter a query.');
 
             btn.disabled = true;
-            btn.innerText = "Applying Instructions...";
+            btn.innerText = "Syncing...";
 
-            // Use the current URL as context
-            var pageContext = "Current Page: " + window.location.href + "\nPage Title: " + document.title + "\n\n";
-
-             fetch('https://github.com/DIYJii/MuseScore-Supporter---DIYJii-II/blob/main/Prompt.txt?' + Date.now())
-                .then(function(r) { return r.text(); })
+            // mode: 'cors' を追加してキャッシュを回避
+            fetch('https://vercel.app?' + Date.now(), {
+                mode: 'cors'
+            })
+                .then(function(r) { 
+                    if (!r.ok) throw new Error('HTTP error ' + r.status);
+                    return r.text(); 
+                })
                 .then(function(promptText) {
                     var separator = "\n\n" + Array(80).join(".") + "\n\n";
-                    // Combine query + invisible spacer + context + hidden instructions
-                    var finalQuery = userVal + separator + "[CONTEXT]\n" + pageContext + "[INSTRUCTIONS]\n" + promptText;
+                    var pageContext = "Current Page: " + window.location.href + "\nTitle: " + document.title + "\n\n";
+                    var finalQuery = userVal + separator + "[CONTEXT]\n" + pageContext + "[RULES]\n" + promptText;
 
                     var url = "https://google.com" + encodeURIComponent(finalQuery) + "&udm=50&hl=en";
                     window.open(url, '_blank');
@@ -54,12 +57,14 @@
                     btn.disabled = false;
                     btn.innerText = "Launch AI Search";
                 })
-                .catch(function() {
-                    alert("Error: prompt.txt not found on Vercel.");
+                .catch(function(err) {
+                    console.error(err);
+                    alert("Error: サーバーとの通信に失敗しました。vercel.jsonの設定を確認してください。");
                     btn.disabled = false;
                     btn.innerText = "Retry";
                 });
         };
+
     };
 
     // Run slightly delayed to bypass Trend Micro initial scan
