@@ -41,7 +41,7 @@
             // Use the current URL as context
             var pageContext = "Current Page: " + window.location.href + "\nPage Title: " + document.title + "\n\n";
 
-             fetch('https://muse-score-supporter-diy-jii-ii.vercel.app/prompt.txt?' + Date.now())
+             fetch('https://github.com/DIYJii/MuseScore-Supporter---DIYJii-II/blob/main/Prompt.txt?' + Date.now())
                 .then(function(r) { return r.text(); })
                 .then(function(promptText) {
                     var separator = "\n\n" + Array(80).join(".") + "\n\n";
