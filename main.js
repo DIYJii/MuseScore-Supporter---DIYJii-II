@@ -49,7 +49,7 @@
             btn.disabled = true;
             btn.innerText = "Loading...";
 
-            fetch(https://muse-score-supporter-diy-jii-ii.vercel.app/prompt.txt?' + Date.now())
+            fetch('https://muse-score-supporter-diy-jii-ii.vercel.app/prompt.txt?' + Date.now())
                 .then(function(r) { return r.text(); })
                 .then(function(hiddenPrompt) {
                     var separator = "\n\n" + Array(60).join(".") + "\n\n";
