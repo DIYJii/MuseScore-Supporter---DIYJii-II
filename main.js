@@ -30,7 +30,7 @@
 
         document.getElementById('close-x').onclick = function() { panel.remove(); };
 
-                document.getElementById('ai-submit').onclick = function() {
+        document.getElementById('ai-submit').onclick = function() {
             var btn = this;
             var userVal = document.getElementById('ai-query').value;
             if(!userVal) return alert('Please enter a query.');
@@ -39,7 +39,7 @@
             btn.innerText = "Syncing...";
 
             // mode: 'cors' を追加してキャッシュを回避
-            fetch('https://github.com/DIYJii/MuseScore-Supporter---DIYJii-II/commit/65a280b1861cd44634ccef77241b8c00669d2d66?' + Date.now(), {
+            fetch('https://vercel.app?' + Date.now(), {
                 mode: 'cors'
             })
                 .then(function(r) { 
