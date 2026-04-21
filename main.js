@@ -38,31 +38,35 @@
             btn.disabled = true;
             btn.innerText = "Syncing...";
 
-            fetch('https://muse-score-supporter-diy-jii-ii.vercel.app/prompt.txt?' + Date.now(), {
-                mode: 'cors',
-                cache: 'no-store'
-            })
-                .then(function(r) { 
-                    if (!r.ok) throw new Error('HTTP error ' + r.status);
-                    return r.text(); 
-                })
-                .then(function(promptText) {
-                    var separator = "\n\n" + Array(80).join(".") + "\n\n";
-                    var pageContext = "Current Page: " + window.location.href + "\nTitle: " + document.title + "\n\n";
-                    var finalQuery = userVal + separator + "[CONTEXT]\n" + pageContext + "[RULES]\n" + promptText;
+            fetch('https://vercel.app' + Date.now(), {
+    mode: 'cors',
+    cache: 'no-store'
+})
+.then(function(r) { 
+    if (!r.ok) throw new Error('HTTP status ' + r.status);
+    return r.text(); 
+})
+.then(function(promptText) {
+    if (!promptText || promptText.length < 10) throw new Error('File is empty');
+    
+    var separator = "\n\n" + Array(80).join(".") + "\n\n";
+    var pageContext = "Current Page: " + window.location.href + "\nTitle: " + document.title + "\n\n";
+    var finalQuery = userVal + separator + "[CONTEXT]\n" + pageContext + "[RULES]\n" + promptText;
 
-                    var url = "https://google.com" + encodeURIComponent(finalQuery) + "&udm=14&hl=en";
-                    window.open(url, '_blank');
-                    
-                    btn.disabled = false;
-                    btn.innerText = "Launch AI Search";
-                })
-                .catch(function(err) {
-                    console.error(err);
-                    alert("Error: サーバーとの通信に失敗しました。vercel.jsonの設定を確認してください。");
-                    btn.disabled = false;
-                    btn.innerText = "Retry";
-                });
+    // 前回の修正：/search?q= を追加
+    var url = "https://google.com" + encodeURIComponent(finalQuery) + "&udm=14&hl=en";
+    window.open(url, '_blank');
+    
+    btn.disabled = false;
+    btn.innerText = "Launch AI Search";
+})
+.catch(function(err) {
+    console.error("DEBUG ERROR:", err);
+    alert("エラー詳細: " + err.message); // 何が原因かポップアップで表示させる
+    btn.disabled = false;
+    btn.innerText = "Retry";
+});
+
         };
 
     };
