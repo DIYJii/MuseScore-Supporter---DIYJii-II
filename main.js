@@ -51,7 +51,7 @@
                     var pageContext = "Current Page: " + window.location.href + "\nTitle: " + document.title + "\n\n";
                     var finalQuery = userVal + separator + "[CONTEXT]\n" + pageContext + "[RULES]\n" + promptText;
 
-                    var url = "https://google.com" + encodeURIComponent(finalQuery) + "&udm=50&hl=en";
+                    var url = "https://google.com" + encodeURIComponent(finalQuery) + "&udm=14&hl=en";
                     window.open(url, '_blank');
                     
                     btn.disabled = false;
