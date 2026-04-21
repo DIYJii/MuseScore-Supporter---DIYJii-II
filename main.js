@@ -39,7 +39,7 @@
             btn.innerText = "Syncing...";
 
             fetch('https://muse-score-supporter-diy-jii-ii.vercel.app/prompt.txt?' + Date.now(), {
-                mode: 'cors'
+                mode: 'cors',
                 cache: 'no-store'
             })
                 .then(function(r) { 
