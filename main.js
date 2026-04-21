@@ -40,7 +40,7 @@
 
             fetch('https://muse-score-supporter-diy-jii-ii.vercel.app/prompt.txt?' + Date.now(), {
                 mode: 'cors'
-                cashe: 'no-store'
+                cache: 'no-store'
             })
                 .then(function(r) { 
                     if (!r.ok) throw new Error('HTTP error ' + r.status);
