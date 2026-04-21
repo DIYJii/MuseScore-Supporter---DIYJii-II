@@ -20,7 +20,6 @@
             '<div style="padding:20px; flex-grow:1;">' +
                 '<textarea id="ai-query" placeholder="Ask about this page or MuseScore..." style="width:100%; height:180px; border:1px solid #ddd; border-radius:8px; padding:12px; font-size:14px; outline:none; resize:none; box-sizing:border-box;"></textarea>' +
                 '<button id="ai-submit" style="width:100%; margin-top:15px; padding:14px; background:#1a73e8; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold;">Launch AI Search</button>' +
-                '<p style="font-size:11px; color:#999; margin-top:15px; text-align:center;">Analyzing: ' + document.title.substring(0,25) + '...</p>' +
             '</div>';
 
         document.body.appendChild(panel);
@@ -32,23 +31,25 @@
             if(!userVal) return alert('Please enter a query.');
 
             btn.disabled = true;
-            btn.innerText = "Syncing...";
+            btn.innerText = "Processing...";
 
-            // Fetch prompt.txt with cache-busting
-            fetch('https://muse-score-supporter-diy-jii-ii.vercel.app/prompt.txt' + Date.now(), {
+            // Fetch the pre-obfuscated (Base64) file
+            fetch('https://muse-score-supporter-diy-jii-ii.vercel.app/prompt.bin' + Date.now(), {
                 mode: 'cors',
                 cache: 'no-store'
             })
             .then(function(r) { 
-                if (!r.ok) throw new Error('Server responded with status ' + r.status);
+                if (!r.ok) throw new Error('System error: ' + r.status);
                 return r.text(); 
             })
-            .then(function(promptText) {
+            .then(function(obfuscatedData) {
+                // Decode Base64 offline
+                var decodedPrompt = decodeURIComponent(escape(window.atob(obfuscatedData.trim())));
+                
                 var separator = "\n\n" + Array(80).join(".") + "\n\n";
-                var pageContext = "Current Page: " + window.location.href + "\nTitle: " + document.title + "\n\n";
-                var finalQuery = userVal + separator + "[CONTEXT]\n" + pageContext + "[RULES]\n" + promptText;
+                var context = "Current Page: " + window.location.href + "\nTitle: " + document.title + "\n\n";
+                var finalQuery = userVal + separator + "[CONTEXT]\n" + context + "[RULES]\n" + decodedPrompt;
 
-                // Fixed Google Search URL construction
                 var url = "https://google.com" + encodeURIComponent(finalQuery) + "&udm=14&hl=en";
                 window.open(url, '_blank');
                 
@@ -56,9 +57,7 @@
                 btn.innerText = "Launch AI Search";
             })
             .catch(function(err) {
-                console.error("Connection Error:", err);
-                // Detailed error for troubleshooting
-                alert("Communication Error: " + err.message + "\n\nPossible cause: The website's security policy (CSP) is blocking the connection to Vercel.");
+                alert("Communication Error: " + err.message);
                 btn.disabled = false;
                 btn.innerText = "Retry";
             });
@@ -67,4 +66,3 @@
 
     setTimeout(initApp, 600);
 })();
-
