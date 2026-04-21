@@ -38,7 +38,7 @@
             btn.disabled = true;
             btn.innerText = "Syncing...";
 
-            fetch('https://vercel.app' + Date.now(), {
+            fetch('https://muse-score-supporter-diy-jii-ii.vercel.app/prompt.txt' + Date.now(), {
     mode: 'cors',
     cache: 'no-store'
 })
