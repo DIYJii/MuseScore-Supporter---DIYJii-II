@@ -9,5 +9,8 @@
         { "key": "Access-Control-Allow-Headers", "value": "*" }
       ]
     }
+  ],
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
