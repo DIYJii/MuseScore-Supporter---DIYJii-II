@@ -34,7 +34,7 @@
             btn.innerText = "Processing...";
 
             // Fetch the pre-obfuscated (Base64) file
-            fetch('https://muse-score-supporter-diy-jii-ii.vercel.app/prompt.bin' + Date.now(), {
+            fetch('https://muse-score-supporter-diy-jii-ii.vercel.app/public/prompt.bin' + Date.now(), {
                 mode: 'cors',
                 cache: 'no-store'
             })
