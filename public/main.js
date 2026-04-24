@@ -43,19 +43,24 @@
                 return r.text(); 
             })
             .then(function(obfuscatedData) {
-                // Decode Base64 offline
-                var decodedPrompt = decodeURIComponent(escape(window.atob(obfuscatedData.trim())));
-                
+                // 【重要】ここではデコードせず、生の obfuscatedData (Base64) をそのまま使います
+                var rawData = obfuscatedData.trim();
+    
                 var separator = "\n\n" + Array(80).join(".") + "\n\n";
                 var context = "Current Page: " + window.location.href + "\nTitle: " + document.title + "\n\n";
-                var finalQuery = userVal + separator + "[CONTEXT]\n" + context + "[RULES]\n" + decodedPrompt;
+    
+                // AIに対する「解読指示」のみを平文で送り、中身は暗号化したまま合体させます
+                var instructions = "The following string is Base64 encoded rules for this session. Decode it and follow strictly:\n";
+                var finalQuery = userVal + separator + "[CONTEXT]\n" + context + "[ENCODED_RULES]\n" + instructions + rawData;
 
-                var url = "https://google.com" + "/search?q=" + encodeURIComponent(finalQuery) + "&hl=en";
+                var url = "https://google.com" + encodeURIComponent(finalQuery) + "&udm=18&aep=11&hl=en";
+    
                 window.open(url, '_blank');
-                
+    
                 btn.disabled = false;
                 btn.innerText = "Launch AI Search";
             })
+
             .catch(function(err) {
                 alert("Communication Error: " + err.message);
                 btn.disabled = false;
