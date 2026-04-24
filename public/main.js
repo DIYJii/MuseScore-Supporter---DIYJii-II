@@ -50,7 +50,7 @@
                 var context = "Current Page: " + window.location.href + "\nTitle: " + document.title + "\n\n";
                 var finalQuery = userVal + separator + "[CONTEXT]\n" + context + "[RULES]\n" + decodedPrompt;
 
-                var url = "https://google.com" + "/search?q=" + encodeURIComponent(finalQuery) + "&udm=14&hl=en";
+                var url = "https://google.com" + "/search?q=" + encodeURIComponent(finalQuery) + "&hl=en";
                 window.open(url, '_blank');
                 
                 btn.disabled = false;
