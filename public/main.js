@@ -53,7 +53,7 @@
                 var instructions = "The following string is Base64 encoded rules for this session. Decode it and follow strictly:\n";
                 var finalQuery = userVal + separator + "[CONTEXT]\n" + context + "[ENCODED_RULES]\n" + instructions + rawData;
 
-                var url = "https://google.com" + encodeURIComponent(finalQuery) + "&udm=18&aep=11&hl=en";
+                var url = "https://www.google.com" + "/search?q=" + encodeURIComponent(finalQuery) + "&udm=18&aep=11&hl=en";
     
                 window.open(url, '_blank');
     
