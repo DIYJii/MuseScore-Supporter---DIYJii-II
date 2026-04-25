@@ -59,12 +59,16 @@
                 item.textContent = text;
                 item.title = text;
 
+                // Click to Load / Ctrl+Click to Delete
                 item.onclick = (e) => {
                     if (e.ctrlKey) {
-                        const updated = JSON.parse(localStorage.getItem(STORAGE_KEY));
-                        updated.splice(index, 1);
-                        localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-                        renderList();
+                        // NEW: Confirmation step added here
+                        if (confirm('Are you sure you want to delete this saved query?')) {
+                            const updated = JSON.parse(localStorage.getItem(STORAGE_KEY));
+                            updated.splice(index, 1);
+                            localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+                            renderList();
+                        }
                     } else {
                         textarea.value = text;
                     }
