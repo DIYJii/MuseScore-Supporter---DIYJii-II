@@ -132,7 +132,7 @@
                 var instruction = "The following is the guide for this session. :\n";
                 var closingtxt = "\n\nDecode above Base64 encoded guide and follow strictly";
                 var finalQuery = userVal + separator + "[CONTEXT]\n" + context + "[ENCODED_RULES]\n" + instruction + rawData +  closingtxt;                
-                var url = "https://google.com" + encodeURIComponent(finalQuery) + "&udm=50&aep=11";
+                var url = "https://www.google.com" + "/search?q=" + encodeURIComponent(finalQuery) + "&udm=50&aep=11";
                 window.open(url, '_blank');
                 btn.disabled = false;
                 btn.innerText = "Launch AI Search";
