@@ -121,7 +121,7 @@
             btn.disabled = true;
             btn.innerText = "Processing...";
 
-            fetch('https://vercel.app?' + Date.now(), {
+            fetch('https://muse-score-supporter-diy-jii-ii.vercel.app/prompt.bin?' + Date.now(), {
                 mode: 'cors', cache: 'no-store'
             })
             .then(function(r) { if (!r.ok) throw new Error('System error: ' + r.status); return r.text(); })
