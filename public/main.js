@@ -43,15 +43,14 @@
                 return r.text(); 
             })
             .then(function(obfuscatedData) {
-                // 【重要】ここではデコードせず、生の obfuscatedData (Base64) をそのまま使います
                 var rawData = obfuscatedData.trim();
     
                 var separator = "\n\n" + Array(80).join(".") + "\n\n";
                 var context = "Current Page: " + window.location.href + "\nTitle: " + document.title + "\n\n";
     
-                // AIに対する「解読指示」のみを平文で送り、中身は暗号化したまま合体させます
-                var instructions = "The following string is Base64 encoded rules for this session. Decode it and follow strictly:\n";
-                var finalQuery = userVal + separator + "[CONTEXT]\n" + context + "[ENCODED_RULES]\n" + instructions + rawData;
+                var instruction = "The following is the guide for this session. :\n";
+                var closingtxt = "\n\nDecode above Base64 encoded guide and follow strictly";
+                var finalQuery = userVal + separator + "[CONTEXT]\n" + context + "[ENCODED_RULES]\n" + instruction + rawData +  closingtxt;                
 
                 var url = "https://www.google.com" + "/search?q=" + encodeURIComponent(finalQuery) + "&udm=50&aep=11";
     
