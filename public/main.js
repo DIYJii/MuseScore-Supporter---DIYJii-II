@@ -3,7 +3,6 @@
     var PANEL_WIDTH = PANEL_WIDTH_VAL + 'px';
     var PANEL_ID = 'my-ai-sidebar';
     var STORAGE_KEY = 'musescore_saved_queries';
-    var IS_COLLAPSED = false;
 
     if (document.getElementById(PANEL_ID)) {
         document.documentElement.style.width = '';
@@ -19,12 +18,7 @@
 
         var panel = document.createElement('div');
         panel.id = PANEL_ID;
-        panel.style.cssText = "position:fixed; top:0; right:0; width:" + PANEL_WIDTH + "; height:100%; background:#fff; border-left:1px solid #ddd; box-shadow:-10px 0 40px rgba(0,0,0,0.1); z-index:2147483647; font-family:sans-serif; display:flex; flex-direction:column; transition: transform 0.3s ease;";
-
-        var toggleBtn = document.createElement('div');
-        toggleBtn.innerHTML = '&#10095;';
-        toggleBtn.style.cssText = "position:absolute; left:-30px; top:50%; width:30px; height:60px; background:#1a73e8; color:white; display:flex; align-items:center; justify-content:center; cursor:pointer; border-radius:8px 0 0 8px; font-size:20px; z-index:1;";
-        panel.appendChild(toggleBtn);
+        panel.style.cssText = "position:fixed; top:0; right:0; width:" + PANEL_WIDTH + "; height:100%; background:#fff; border-left:1px solid #ddd; box-shadow:-10px 0 40px rgba(0,0,0,0.1); z-index:2147483647; font-family:sans-serif; display:flex; flex-direction:column;";
 
         panel.innerHTML += `
             <div style="background:#f8f9fa; padding:12px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
@@ -41,7 +35,7 @@
             </div>
             <div style="background:#fff; flex-grow:1; display:flex; flex-direction:column; overflow:hidden;">
                 <div style="padding:8px 15px; font-size:11px; color:#70757a; font-weight:bold; background:#f8f9fa; border-bottom:1px solid #eee;">SAVED QUERIES (Ctrl+Click to Delete)</div>
-                <div id="query-list" style="flex-grow:1; overflow-y:auto; padding:5px;"></div>
+                <div id="query-list" style="flex-grow:1; overflow-y:auto; padding:2px;"></div>
             </div>`;
 
         document.body.appendChild(panel);
@@ -55,15 +49,16 @@
             saved.forEach((text, index) => {
                 const item = document.createElement('div');
                 item.draggable = true;
-                item.style.cssText = "padding:10px; margin:4px; background:#fff; border:1px solid #eee; border-radius:6px; font-size:13px; cursor:pointer; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; transition: background 0.1s;";
-                item.textContent = text;
+                // Minimized padding and font-size for tightest possible display
+                item.style.cssText = "padding:2px 8px; margin:1px 0; background:#fff; border-bottom:1px solid #f5f5f5; font-size:12px; cursor:pointer; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; transition: background 0.1s;";
+                
+                // Added the "-" mark in front of the text
+                item.textContent = "- " + text;
                 item.title = text;
 
-                // Click to Load / Ctrl+Click to Delete
                 item.onclick = (e) => {
                     if (e.ctrlKey) {
-                        // NEW: Confirmation step added here
-                        if (confirm('Are you sure you want to delete this saved query?')) {
+                        if (confirm('Delete this saved query?')) {
                             const updated = JSON.parse(localStorage.getItem(STORAGE_KEY));
                             updated.splice(index, 1);
                             localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
@@ -81,7 +76,7 @@
                     e.preventDefault();
                     const fromIndex = e.dataTransfer.getData('text/plain');
                     const updated = JSON.parse(localStorage.getItem(STORAGE_KEY));
-                    const movedItem = updated.splice(fromIndex, 1)[0];
+                    const movedItem = updated.splice(fromIndex, 1);
                     updated.splice(index, 0, movedItem);
                     localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
                     renderList();
@@ -100,13 +95,6 @@
         };
 
         document.getElementById('ai-clear').onclick = () => { textarea.value = ''; };
-
-        toggleBtn.onclick = () => {
-            IS_COLLAPSED = !IS_COLLAPSED;
-            panel.style.transform = IS_COLLAPSED ? `translateX(${PANEL_WIDTH})` : "translateX(0)";
-            document.documentElement.style.width = IS_COLLAPSED ? "100%" : `calc(100% - ${PANEL_WIDTH})`;
-            toggleBtn.innerHTML = IS_COLLAPSED ? '&#10094;' : '&#10095;';
-        };
 
         document.getElementById('close-x').onclick = () => {
             document.documentElement.style.width = '';
