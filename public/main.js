@@ -1,4 +1,9 @@
 (function() {
+    const existingLoader = document.getElementById('ai-assistant-loader');
+    if (existingLoader && !document.getElementById('my-ai-sidebar')) {
+        existingLoader.remove(); 
+    }
+(function() {
     var PANEL_WIDTH = '380px';
     var PANEL_ID = 'my-ai-sidebar';
     var STORAGE_KEY = 'musescore_saved_queries';
