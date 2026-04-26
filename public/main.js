@@ -1,15 +1,11 @@
 (function() {
-    const existingLoader = document.getElementById('ai-assistant-loader');
-    if (existingLoader && !document.getElementById('my-ai-sidebar')) {
-        existingLoader.remove(); 
-    }
-(function() {
     var PANEL_WIDTH = '380px';
     var PANEL_ID = 'my-ai-sidebar';
     var STORAGE_KEY = 'musescore_saved_queries';
     var SESSION_FLAG = 'ai-sidebar-active';
     var TEMP_TEXT_KEY = 'ai-sidebar-temp-text';
 
+    // 二重起動防止
     if (document.getElementById(PANEL_ID)) {
         closePanel();
         return;
@@ -21,6 +17,7 @@
         var p = document.getElementById(PANEL_ID);
         if (p) p.remove();
         sessionStorage.removeItem(SESSION_FLAG);
+        sessionStorage.removeItem(TEMP_TEXT_KEY);
     }
 
     var initApp = function() {
@@ -52,16 +49,13 @@
         document.body.appendChild(panel);
 
         var tx = document.getElementById('ai-query');
-        
-        // Restore drafting text
         tx.value = sessionStorage.getItem(TEMP_TEXT_KEY) || '';
         tx.oninput = function() { sessionStorage.setItem(TEMP_TEXT_KEY, tx.value); };
 
-        // AI Search Button Logic
         document.getElementById('ai-submit').onclick = function() {
             var q = tx.value.trim();
             if(q) {
-                var url = 'https://www.google.com' + "/search?q=" + encodeURIComponent(q) + '&udm=50&aep=11';
+                var url = 'https://www.google.com' + '/search?q=' + encodeURIComponent(q) + '&udm=50&aep=11';
                 window.open(url, 'ai-search-window');
             }
         };
@@ -106,28 +100,18 @@
         renderList();
     };
 
-    // Initial Execution
+    // 初回起動
     initApp();
 
-    // Persist across navigation within domain
+    // ページ移動（URL変化）を監視して、消えていたら再描画する
+    var lastUrl = location.href;
     setInterval(function() {
-        if (sessionStorage.getItem(SESSION_FLAG) === 'true' && !document.getElementById(PANEL_ID)) {
-            initApp();
-        }
-    }, 1500);
-})();
-
-    // --- ページ遷移（SPA/通常リロード両方）に対応するための追記 ---
-(function() {
-    var check = function() {
-        if (sessionStorage.getItem('ai-sidebar-active') === 'true' && !document.getElementById('my-ai-sidebar')) {
-            if (typeof initApp === 'function') {
+        if (sessionStorage.getItem(SESSION_FLAG) === 'true') {
+            if (location.href !== lastUrl || !document.getElementById(PANEL_ID)) {
+                lastUrl = location.href;
                 initApp();
             }
         }
-    };
-    // ページ内のリンククリック等によるURL変化を監視
-    setInterval(check, 1000);
-    // ページ読み込み完了時にも実行
-    window.addEventListener('load', check);
+    }, 1000);
+
 })();
