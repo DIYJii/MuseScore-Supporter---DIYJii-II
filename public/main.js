@@ -36,12 +36,15 @@
             <div style="background:#fff; flex-grow:1; display:flex; flex-direction:column; overflow:hidden; position:relative;">
                 <div style="padding:8px 15px; font-size:11px; color:#70757a; font-weight:bold; background:#f8f9fa; border-bottom:1px solid #eee;">SAVED QUERIES (Ctrl+Click to Delete)</div>
                 <div id="query-list" style="flex-grow:1; overflow-y:auto; padding:2px;"></div>
-                <!-- Mini Confirmation Overlay -->
-                <div id="mini-confirm" style="display:none; position:absolute; top:40px; left:50%; transform:translateX(-50%); background:#fff; border:1px solid #ccc; box-shadow:0 2px 10px rgba(0,0,0,0.1); padding:8px; border-radius:4px; z-index:10; text-align:center;">
-                    <div style="font-size:11px; margin-bottom:5px;">Delete OK?</div>
-                    <div style="display:flex; gap:5px;">
-                        <button id="confirm-yes" style="padding:2px 8px; font-size:10px; background:#d93025; color:white; border:none; border-radius:2px; cursor:pointer;">Yes</button>
-                        <button id="confirm-no" style="padding:2px 8px; font-size:10px; background:#f1f3f4; border:1px solid #ccc; border-radius:2px; cursor:pointer;">No</button>
+                
+                <!-- Beak Style Confirmation -->
+                <div id="mini-confirm" style="display:none; position:absolute; top:45px; left:50%; transform:translateX(-50%); background:#fff; border:1px solid #1a73e8; box-shadow:0 4px 12px rgba(0,0,0,0.15); padding:10px; border-radius:6px; z-index:10; text-align:center;">
+                    <!-- The Beak -->
+                    <div style="position:absolute; top:-6px; left:50%; transform:translateX(-50%); width:0; height:0; border-left:6px solid transparent; border-right:6px solid transparent; border-bottom:6px solid #1a73e8;"></div>
+                    <div style="font-size:12px; margin-bottom:8px; font-weight:bold; color:#333;">Delete OK?</div>
+                    <div style="display:flex; gap:6px; justify-content:center;">
+                        <button id="confirm-yes" style="padding:3px 12px; font-size:11px; background:#d93025; color:white; border:none; border-radius:4px; cursor:pointer;">Yes</button>
+                        <button id="confirm-no" style="padding:3px 12px; font-size:11px; background:#f1f3f4; color:#5f6368; border:1px solid #dadce0; border-radius:4px; cursor:pointer;">No</button>
                     </div>
                 </div>
             </div>`;
@@ -88,7 +91,6 @@
             });
         };
 
-        // Custom Confirm Logic
         document.getElementById('confirm-yes').onclick = () => {
             const updated = JSON.parse(localStorage.getItem(STORAGE_KEY));
             updated.splice(deleteIdx, 1);
