@@ -16,9 +16,18 @@
         document.documentElement.style.overflowX = '';
         var p = document.getElementById(PANEL_ID);
         if (p) p.remove();
-        sessionStorage.removeItem(SESSION_FLAG);
+    
+        // ここが重要：手動で閉じた時は active フラグを消す
+        sessionStorage.removeItem(SESSION_FLAG); 
         sessionStorage.removeItem(TEMP_TEXT_KEY);
+    
+        // 監視タイマーも止める（もしあれば）
+    if (window.sidebarObserver) {
+        clearInterval(window.sidebarObserver);
+        window.sidebarObserver = null;
     }
+}
+
 
     var initApp = function() {
         if (document.getElementById(PANEL_ID)) return;
