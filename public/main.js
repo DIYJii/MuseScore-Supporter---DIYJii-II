@@ -116,3 +116,18 @@
         }
     }, 1500);
 })();
+
+    // --- ページ遷移（SPA/通常リロード両方）に対応するための追記 ---
+(function() {
+    var check = function() {
+        if (sessionStorage.getItem('ai-sidebar-active') === 'true' && !document.getElementById('my-ai-sidebar')) {
+            if (typeof initApp === 'function') {
+                initApp();
+            }
+        }
+    };
+    // ページ内のリンククリック等によるURL変化を監視
+    setInterval(check, 1000);
+    // ページ読み込み完了時にも実行
+    window.addEventListener('load', check);
+})();
