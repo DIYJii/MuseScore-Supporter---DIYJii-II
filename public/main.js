@@ -120,10 +120,17 @@
         };
 
         // 検索実行（タブ使い回し設定）
-        document.getElementById('ai-submit').onclick = () => {
-            const q = textarea.value.trim();
-            if (q) window.open('https://www.google.com' + '/search?q=' + encodeURIComponent(q), 'ai-search-window');
+        document.getElementById('ai-submit').onclick = function() {
+            var val = tx.value.trim();
+            if(val) {
+                // パラメータを付与したURLを作成
+                var url = 'https://google.com' + encodeURIComponent(val) + '&udm=50&aep=11';
+                
+                // 'ai-search-window' を指定することで、同じタブでAI検索が更新されます
+                window.open(url, 'ai-search-window');
+            }
         };
+
 
         document.getElementById('ai-save').onclick = () => {
             const val = textarea.value.trim();
