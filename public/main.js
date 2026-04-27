@@ -2,10 +2,8 @@
     var PANEL_WIDTH = '380px';
     var PANEL_ID = 'my-ai-sidebar';
     var STORAGE_KEY = 'musescore_saved_queries';
-    var SESSION_FLAG = 'ai-sidebar-active';
     var TEMP_TEXT_KEY = 'ai-sidebar-temp-text';
 
-    // 二重起動防止
     if (document.getElementById(PANEL_ID)) {
         closePanel();
         return;
@@ -16,18 +14,7 @@
         document.documentElement.style.overflowX = '';
         var p = document.getElementById(PANEL_ID);
         if (p) p.remove();
-    
-        // ここが重要：手動で閉じた時は active フラグを消す
-        sessionStorage.removeItem(SESSION_FLAG); 
-        sessionStorage.removeItem(TEMP_TEXT_KEY);
-    
-        // 監視タイマーも止める（もしあれば）
-    if (window.sidebarObserver) {
-        clearInterval(window.sidebarObserver);
-        window.sidebarObserver = null;
     }
-}
-
 
     var initApp = function() {
         if (document.getElementById(PANEL_ID)) return;
@@ -41,25 +28,39 @@
         panel.style.cssText = "position:fixed; top:0; right:0; width:" + PANEL_WIDTH + "; height:100%; background:#fcfcfc; border-left:1px solid #dee2e6; box-shadow:-5px 0 15px rgba(0,0,0,0.05); z-index:2147483647; font-family:sans-serif; display:flex; flex-direction:column;";
 
         panel.innerHTML = `
-            <div style="background:#fff; padding:15px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
-                <span style="font-weight:700; color:#2e68c0; font-size:15px;">MuseScore Helper</span>
+            <div style="background:#fff; padding:12px 15px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-weight:700; color:#2e68c0; font-size:15px;">MuseScore Supporter</span>
                 <button id="close-x" style="cursor:pointer; border:none; background:none; font-size:22px; color:#ccc;">&times;</button>
             </div>
-            <div style="padding:20px; display:flex; flex-direction:column; gap:12px; background:#fff; border-bottom:1px solid #eee;">
-                <textarea id="ai-query" placeholder="Ask about MuseScore..." style="width:100%; height:120px; border:1px solid #ced4da; border-radius:6px; padding:12px; font-size:14px; outline:none; resize:none; box-sizing:border-box; color:#495057;"></textarea>
-                <button id="ai-submit" style="width:100%; padding:12px; background:#2e68c0; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">Launch AI Search</button>
+            <div style="padding:15px; display:flex; flex-direction:column; gap:10px; background:#fff; border-bottom:1px solid #eee;">
+                <!-- プレースホルダに説明文を追加 -->
+                <textarea id="ai-query" placeholder="Ask anything about MuseScore. 
+(e.g., 'How to add a triplet' or just 'triplet shortcut')" style="width:100%; height:110px; border:1px solid #ced4da; border-radius:6px; padding:12px; font-size:13px; outline:none; resize:none; box-sizing:border-box; color:#495057; line-height:1.4;"></textarea>
+                
+                <button id="ai-submit" style="width:100%; height:34px; background:#2e68c0; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold; font-size:14px;">AI Search</button>
+                
                 <div style="display:flex; gap:10px;">
-                    <button id="ai-clear" style="flex:1; height:36px; background:#ffede5; color:#e65100; border:1px solid #ffccbc; border-radius:6px; cursor:pointer; font-size:13px; font-weight:600;">Clear</button>
-                    <button id="ai-save" style="flex:1; height:36px; background:#fff8e1; color:#ff8f00; border:1px solid #ffe082; border-radius:6px; cursor:pointer; font-size:13px; font-weight:600;">Save Query</button>
+                    <!-- Clear: 背景を濃くし、文字を白に -->
+                    <button id="ai-clear" style="flex:1; height:28px; background:#e64a19; color:white; border:none; border-radius:6px; cursor:pointer; font-size:12px; font-weight:600;">Clear</button>
+                    <!-- Save: 背景を濃くし、文字を白に -->
+                    <button id="ai-save" style="flex:1; height:28px; background:#ffa000; color:white; border:none; border-radius:6px; cursor:pointer; font-size:12px; font-weight:600;">Save Query</button>
                 </div>
             </div>
-            <div style="background:#fcfcfc; flex-grow:1; overflow-y:auto; padding:5px;" id="query-list"></div>`;
+            <div style="background:#fcfcfc; flex-grow:1; overflow-y:auto; padding:5px;" id="query-list"></div>
+            <!-- 最下部にクレジットを追加 -->
+            <div style="padding:10px; text-align:center; font-size:10px; color:#aaa; border-top:1px solid #eee; background:#fff;">
+                Powered by <span style="font-weight:bold;">Google AI Search</span>
+            </div>`;
 
         document.body.appendChild(panel);
 
         var tx = document.getElementById('ai-query');
-        tx.value = sessionStorage.getItem(TEMP_TEXT_KEY) || '';
-        tx.oninput = function() { sessionStorage.setItem(TEMP_TEXT_KEY, tx.value); };
+        var savedTemp = sessionStorage.getItem(TEMP_TEXT_KEY);
+        if (savedTemp) tx.value = savedTemp;
+
+        tx.oninput = function() {
+            sessionStorage.setItem(TEMP_TEXT_KEY, tx.value);
+        };
 
         document.getElementById('ai-submit').onclick = function() {
             var q = tx.value.trim();
@@ -91,7 +92,7 @@
             list.innerHTML = '';
             saved.forEach(function(text, index) {
                 var item = document.createElement('div');
-                item.style.cssText = "padding:10px; margin:4px; background:#fff; border:1px solid #e9ecef; border-radius:6px; font-size:13px; cursor:pointer; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#495057;";
+                item.style.cssText = "padding:8px 10px; margin:4px; background:#fff; border:1px solid #e9ecef; border-radius:4px; font-size:12px; cursor:pointer; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#495057;";
                 item.textContent = text;
                 item.onclick = function(e) {
                     if (e.ctrlKey) {
@@ -109,18 +110,5 @@
         renderList();
     };
 
-    // 初回起動
     initApp();
-
-    // ページ移動（URL変化）を監視して、消えていたら再描画する
-    var lastUrl = location.href;
-    setInterval(function() {
-        if (sessionStorage.getItem(SESSION_FLAG) === 'true') {
-            if (location.href !== lastUrl || !document.getElementById(PANEL_ID)) {
-                lastUrl = location.href;
-                initApp();
-            }
-        }
-    }, 1000);
-
 })();
