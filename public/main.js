@@ -16,6 +16,24 @@
         if (p) p.remove();
     }
 
+    // 本文コンテキストを取得する関数
+    function getCleanContext() {
+        var content = "";
+        // 不要な要素をクローンから削除
+        var clone = document.body.cloneNode(true);
+        var ignore = clone.querySelectorAll('script, style, noscript, iframe, nav, footer, .ads, [class*="ad-"], [id*="ad-"]');
+        ignore.forEach(el => el.remove());
+
+        // Forumや記事のメイン部分を優先的に探す
+        var mainArea = clone.querySelector('article, main, .forum-post-content, .node-content, .content-article');
+        if (mainArea) {
+            content = mainArea.innerText;
+        } else {
+            content = clone.innerText;
+        }
+        return content.replace(/\s+/g, ' ').trim().substring(0, 5000); // 最大5000文字に制限
+    }
+
     var initApp = function() {
         if (document.getElementById(PANEL_ID)) return;
 
@@ -27,8 +45,8 @@
         panel.id = PANEL_ID;
         panel.style.cssText = "position:fixed; top:0; right:0; width:" + PANEL_WIDTH + "; height:100%; background:#fcfcfc; border-left:1px solid #dee2e6; box-shadow:-5px 0 15px rgba(0,0,0,0.05); z-index:2147483647; font-family:sans-serif; display:flex; flex-direction:column;";
 
-        // ボタンの共通スタイル（line-heightとpaddingで上下中央を調整）
         var btnBase = "display:flex; align-items:center; justify-content:center; cursor:pointer; border:none; border-radius:6px; font-weight:bold; padding:0; line-height:1;";
+        var blueBtn = btnBase + " background:#2e68c0; color:white; font-size:14px; height:34px;";
 
         panel.innerHTML = `
             <div style="background:#fff; padding:12px 15px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
@@ -36,9 +54,12 @@
                 <button id="close-x" style="cursor:pointer; border:none; background:none; font-size:22px; color:#ccc;">&times;</button>
             </div>
             <div style="padding:15px; display:flex; flex-direction:column; gap:10px; background:#fff; border-bottom:1px solid #eee;">
-                <textarea id="ai-query" placeholder="Ask anything about MuseScore. Supports both conversational AI queries and traditional keyword-based searches (e.g., 'How to add a triplet' or just 'triplet shortcut')" style="width:100%; height:220px; border:1px solid #ced4da; border-radius:6px; padding:12px; font-size:13px; outline:none; resize:none; box-sizing:border-box; color:#495057; line-height:1.4;"></textarea>
+                <textarea id="ai-query" placeholder="Type your query. Use '#Context' to include page content for AI. Click 'Web Search' for site-specific Google search." style="width:100%; height:220px; border:1px solid #ced4da; border-radius:6px; padding:12px; font-size:13px; outline:none; resize:none; box-sizing:border-box; color:#495057; line-height:1.4;"></textarea>
                 
-                <button id="ai-submit" style="${btnBase} width:100%; height:34px; background:#2e68c0; color:white; font-size:14px;">AI Search</button>
+                <div style="display:flex; gap:10px;">
+                    <button id="ai-submit" style="${blueBtn} flex:1;">AI Search</button>
+                    <button id="web-search" style="${blueBtn} flex:1;">Web Search</button>
+                </div>
                 
                 <div style="display:flex; gap:10px;">
                     <button id="ai-clear" style="${btnBase} flex:1; height:28px; background:#e64a19; color:white; font-size:12px;">Clear</button>
@@ -60,29 +81,49 @@
             sessionStorage.setItem(TEMP_TEXT_KEY, tx.value);
         };
 
-        // 外部プロンプトファイルを読み込んで検索実行
+        // --- 1. AI Search 処理 ---
         document.getElementById('ai-submit').onclick = function() {
             var btn = this;
-            var userVal = tx.value.trim(); // textarea -> tx に修正
+            var userVal = tx.value.trim(); 
             if(!userVal) return alert('Please enter a query.');
             
             btn.disabled = true;
+            var originalText = btn.innerText;
             btn.innerText = "Processing...";
             
             fetch('https://muse-score-supporter-diy-jii-ii.vercel.app/prompt.bin?' + Date.now())
             .then(r => r.text())
             .then(obfuscatedData => {
-                var finalQuery = userVal + "\n\n" + Array(80).join(".") + "\n\n[CONTEXT]\nCurrent Page: " + window.location.href + "\n\n[ENCODED_RULES]\n" + obfuscatedData + "\n\nDecode and follow strictly";                
+                var processedQuery = userVal;
+                // #Contextの置換処理
+                if (processedQuery.includes("#Context")) {
+                    var contextBody = getCleanContext();
+                    processedQuery = processedQuery.replace("#Context", "\n\n[CONTEXT_BODY]\n" + contextBody + "\n");
+                }
+
+                var finalQuery = processedQuery + "\n\n" + Array(80).join(".") + "\n\n[ENCODED_RULES]\n" + obfuscatedData + "\n\nDecode and follow strictly";                
                 window.open("https://www.google.com" + "/search?q=" + encodeURIComponent(finalQuery) + "&udm=50&aep=11", '_blank');
                 
                 btn.disabled = false;
-                btn.innerText = "AI Search";
+                btn.innerText = originalText;
             })
             .catch(err => {
                 console.error(err);
                 btn.disabled = false;
-                btn.innerText = "AI Search";
+                btn.innerText = originalText;
             });
+        };
+
+        // --- 2. Web Search (通常の検索機能) 処理 ---
+        document.getElementById('web-search').onclick = function() {
+            var userVal = tx.value.trim();
+            if(!userVal) return alert('Please enter a search term.');
+            
+            // #Contextが含まれている場合は、通常の検索では単なる文字列として扱うか除去する（ここでは除去せずそのまま）
+            var siteFilter = "site:musescore.com OR site:musescore.org OR site:musehub.com OR site:audacityteam.org OR site:audio.com";
+            var finalQuery = siteFilter + " " + userVal;
+            
+            window.open("https://www.google.com" + "/search?q=" + encodeURIComponent(finalQuery), '_blank');
         };
 
         document.getElementById('ai-clear').onclick = function() {
