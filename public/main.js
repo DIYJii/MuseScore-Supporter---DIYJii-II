@@ -34,7 +34,8 @@
 
     var panel = document.createElement('div');
     panel.id = PANEL_ID;
-    panel.style.cssText = `position:fixed; top:0; right:0; width:${PANEL_WIDTH}; height:100%; background:#fcfcfc; border-left:1px solid #ccc; z-index:2147483647; font-family:sans-serif; display:flex; flex-direction:column; box-shadow:-5px 0 15px rgba(0,0,0,0.1); box-sizing:border-box; padding-bottom:60px;`;
+    // 枠自体は画面の一番下まで届くように設定
+    panel.style.cssText = `position:fixed; top:0; right:0; width:${PANEL_WIDTH}; height:100%; background:#fcfcfc; border-left:1px solid #ccc; z-index:2147483647; font-family:sans-serif; display:flex; flex-direction:column; box-shadow:-5px 0 15px rgba(0,0,0,0.1); box-sizing:border-box;`;
 
     var btnBase = "display:flex; align-items:center; justify-content:center; cursor:pointer; border:none; border-radius:4px; font-weight:bold; color:white; box-sizing:border-box;";
 
@@ -60,7 +61,7 @@
         <div id="history-container" style="margin:5px 15px; display:flex; flex-direction:column; flex:1; background:rgba(232, 245, 233, 0.4); border:2px solid #bbb; border-radius:6px; overflow:hidden;">
             <div style="flex-grow:1; overflow-y:auto; padding:3px;" id="query-list"></div>
         </div>
-        <div style="padding:10px 8px; text-align:center; font-size:11px; font-weight:bold; color:${MS_DARK_BLUE}; background:#fff; border-top:1px solid #eee; flex-shrink:0;">Powered by Google AI Search</div>`;
+        <div style="padding:10px 8px; text-align:center; font-size:11px; font-weight:bold; color:${MS_DARK_BLUE}; background:#fff; border-top:1px solid #eee; flex-shrink:0; margin-bottom:45px;">Powered by Google AI Search</div>`;
 
     document.body.appendChild(panel);
     document.documentElement.style.width = `calc(100% - ${PANEL_WIDTH})`;
@@ -141,7 +142,7 @@
                 e.preventDefault();
                 var fromIdx = e.dataTransfer.getData('text/plain');
                 var toIdx = idx;
-                var item = saved.splice(fromIdx, 1)[0]; // [0]を追加して配列から抽出
+                var item = saved.splice(fromIdx, 1)[0];
                 saved.splice(toIdx, 0, item);
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
                 renderSavedQueries();
@@ -205,6 +206,6 @@
         if (!raw) return;
         var domainFilter = getSiteFilter();
         var full = (domainFilter ? domainFilter + " " : "") + raw;
-        window.open("https://www.google.com" + "/search?q=" + encodeURIComponent(full), '_blank');
+        window.open("https://www.google.com" + "/search?q=" +  encodeURIComponent(full), '_blank');
     };
 })();
