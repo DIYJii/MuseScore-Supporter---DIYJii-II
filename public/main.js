@@ -34,20 +34,19 @@
 
     var panel = document.createElement('div');
     panel.id = PANEL_ID;
-    // 指示通り最上部の線を濃く設定
     panel.style.cssText = `position:fixed; top:0; right:0; width:${PANEL_WIDTH}; height:100%; background:#fcfcfc; border-left:1px solid #ccc; z-index:2147483647; font-family:sans-serif; display:flex; flex-direction:column; box-shadow:-5px 0 15px rgba(0,0,0,0.1);`;
 
     var btnBase = "display:flex; align-items:center; justify-content:center; cursor:pointer; border:none; border-radius:4px; font-weight:bold; color:white; box-sizing:border-box;";
 
     panel.innerHTML = `
-        <div style="background:#fff; padding:5px 15px; border-bottom:2px solid #ccc; display:flex; justify-content:center; align-items:center; height:40px; flex-shrink:0; position:relative;">
+        <div style="background:#fff; padding:5px 15px; border-top:2px solid #ccc; border-bottom:2px solid #ccc; display:flex; justify-content:center; align-items:center; height:40px; flex-shrink:0; position:relative;">
             <span style="font-weight:900; color:${MS_DARK_BLUE}; font-size:22px;">MuseScore Supporter</span>
             <button id="close-x" style="cursor:pointer; border:none; background:none; font-size:28px; color:#aaa; position:absolute; right:15px;">&times;</button>
         </div>
         <div id="domain-area" style="padding:2px 15px; background:#fff; border-bottom:1px solid #eee; flex-shrink:0;">
             <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:2px;" id="row-sites"></div>
         </div>
-        <div style="padding:10px 15px 5px 15px; display:flex; flex-direction:column; gap:6px; flex:1; background:rgba(232, 245, 233, 0.4);">
+        <div style="padding:2px 15px 5px 15px; display:flex; flex-direction:column; gap:6px; flex:1; background:rgba(232, 245, 233, 0.4);">
             <textarea id="ai-query" placeholder="Type your query for AI Search.\nUse '#context' to inject page text.\nSite:https://" style="width:100%; height:160px; border:2px solid #bbb; border-radius:6px; padding:8px; font-size:13px; color:#111; resize:none; box-sizing:border-box; outline:none; background:#fff; flex:1;"></textarea>
             <div style="display:flex; gap:8px;">
                 <button id="ai-submit" style="${btnBase} background:${SEARCH_BLUE}; flex:1; height:32px; font-size:12px;">AI Search</button>
@@ -95,7 +94,6 @@
     renderToggles();
 
     function getSiteFilter() {
-        // ALLの場合はPrompt.binで記述されるため空にする
         if (selected.all) return ""; 
         var sites = domains.filter(d => selected[d.id]).map(d => "site:" + d.url).join(" OR ");
         return sites ? sites : "";
@@ -110,7 +108,8 @@
             row.style.cssText = "background:#fff; border-bottom:1px solid #eee; padding:4px 8px; font-size:12px; color:#333; display:flex; align-items:center; height:28px; box-sizing:border-box; position:relative;";
             var txt = document.createElement('span');
             txt.style.cssText = "flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:pointer;";
-            txt.innerText = q;
+            // 保存されたクエリの改行をスペースに変換して1行で表示
+            txt.innerText = q.replace(/\n/g, ' ');
             txt.onclick = () => { tx.value = q; };
             var delBtn = document.createElement('button');
             delBtn.innerHTML = '&times;';
@@ -187,7 +186,8 @@
         var raw = tx.value.trim().replace(/[#＃][Cc][Oo][Nn][Tt][Ee][Xx][Tt]/gi, "");
         if (!raw) return;
         var domainFilter = getSiteFilter();
+        // Domainボタンの指定をクエリの頭に付与
         var full = (domainFilter ? domainFilter + " " : "") + raw;
-        window.open("https://www.google.com" + "/search?q=" + encodeURIComponent(full), '_blank');
+        window.open("https://www.google.com"  + "/search?q=" + encodeURIComponent(full), '_blank');
     };
 })();
