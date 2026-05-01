@@ -34,33 +34,34 @@
 
     var panel = document.createElement('div');
     panel.id = PANEL_ID;
+    // 指示通り最上部の線を濃く設定
     panel.style.cssText = `position:fixed; top:0; right:0; width:${PANEL_WIDTH}; height:100%; background:#fcfcfc; border-left:1px solid #ccc; z-index:2147483647; font-family:sans-serif; display:flex; flex-direction:column; box-shadow:-5px 0 15px rgba(0,0,0,0.1);`;
 
     var btnBase = "display:flex; align-items:center; justify-content:center; cursor:pointer; border:none; border-radius:4px; font-weight:bold; color:white; box-sizing:border-box;";
 
     panel.innerHTML = `
-        <div style="background:#fff; padding:5px 15px; border-bottom:1px solid #eee; display:flex; justify-content:center; align-items:center; height:40px; flex-shrink:0; position:relative;">
+        <div style="background:#fff; padding:5px 15px; border-bottom:2px solid #ccc; display:flex; justify-content:center; align-items:center; height:40px; flex-shrink:0; position:relative;">
             <span style="font-weight:900; color:${MS_DARK_BLUE}; font-size:22px;">MuseScore Supporter</span>
             <button id="close-x" style="cursor:pointer; border:none; background:none; font-size:28px; color:#aaa; position:absolute; right:15px;">&times;</button>
         </div>
         <div id="domain-area" style="padding:2px 15px; background:#fff; border-bottom:1px solid #eee; flex-shrink:0;">
             <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:2px;" id="row-sites"></div>
         </div>
-        <div style="padding:10px 15px; display:flex; flex-direction:column; gap:0px; flex:1; background:rgba(232, 245, 233, 0.4);">
-            <textarea id="ai-query" placeholder="Type your query for AI Search.\nUse '#context' to inject page text.\nSite:https://" style="width:100%; height:160px; border:2px solid #bbb; border-radius:6px 6px 0 0; padding:8px; font-size:13px; color:#111; resize:none; box-sizing:border-box; outline:none; background:#fff;"></textarea>
-            <div style="display:flex; gap:2px; margin-top:-1px;">
-                <button id="ai-submit" style="${btnBase} background:${SEARCH_BLUE}; flex:1; height:38px; font-size:13px; border-radius:0 0 0 6px;">AI Search</button>
-                <button id="web-search" style="${btnBase} background:${SEARCH_BLUE}; flex:1; height:38px; font-size:13px; border-radius:0 0 6px 0;">Key Words Search</button>
+        <div style="padding:10px 15px 5px 15px; display:flex; flex-direction:column; gap:6px; flex:1; background:rgba(232, 245, 233, 0.4);">
+            <textarea id="ai-query" placeholder="Type your query for AI Search.\nUse '#context' to inject page text.\nSite:https://" style="width:100%; height:160px; border:2px solid #bbb; border-radius:6px; padding:8px; font-size:13px; color:#111; resize:none; box-sizing:border-box; outline:none; background:#fff; flex:1;"></textarea>
+            <div style="display:flex; gap:8px;">
+                <button id="ai-submit" style="${btnBase} background:${SEARCH_BLUE}; flex:1; height:32px; font-size:12px;">AI Search</button>
+                <button id="web-search" style="${btnBase} background:${SEARCH_BLUE}; flex:1; height:32px; font-size:12px;">Key Words Search</button>
             </div>
-            <div style="display:flex; gap:8px; margin-top:6px;">
+            <div style="display:flex; gap:8px; margin-top:0px;">
                 <button id="ai-save" style="${btnBase} background:#ef6c00; flex:1; height:32px; font-size:12px;">Save Query</button>
                 <button id="ai-clear" style="${btnBase} background:${CLEAR_RED}; flex:1; height:32px; font-size:12px;">Clear Query</button>
             </div>
         </div>
-        <div id="history-container" style="margin:10px 15px; display:flex; flex-direction:column; flex:1; background:rgba(232, 245, 233, 0.4); border:2px solid #bbb; border-radius:6px; overflow:hidden;">
+        <div id="history-container" style="margin:5px 15px 10px 15px; display:flex; flex-direction:column; flex:1; background:rgba(232, 245, 233, 0.4); border:2px solid #bbb; border-radius:6px; overflow:hidden;">
             <div style="flex-grow:1; overflow-y:auto; padding:5px;" id="query-list"></div>
         </div>
-        <div style="padding:8px; text-align:center; font-size:10px; color:#888; background:#fff; border-top:1px solid #eee;">Powered by Google AI Search</div>`;
+        <div style="padding:8px; text-align:center; font-size:11px; font-weight:bold; color:${MS_DARK_BLUE}; background:#fff; border-top:1px solid #eee;">Powered by Google AI Search</div>`;
 
     document.body.appendChild(panel);
     document.documentElement.style.width = `calc(100% - ${PANEL_WIDTH})`;
@@ -94,8 +95,10 @@
     renderToggles();
 
     function getSiteFilter() {
-        if (selected.all) return "site:musescore.com OR site:musescore.org OR site:musehub.com OR site:audacityteam.org OR site:audio.com";
-        return domains.filter(d => selected[d.id]).map(d => "site:" + d.url).join(" OR ");
+        // ALLの場合はPrompt.binで記述されるため空にする
+        if (selected.all) return ""; 
+        var sites = domains.filter(d => selected[d.id]).map(d => "site:" + d.url).join(" OR ");
+        return sites ? sites : "";
     }
 
     function renderSavedQueries() {
@@ -114,18 +117,9 @@
             delBtn.style.cssText = "background:none; color:#aaa; border:none; cursor:pointer; font-size:18px; padding:0 5px; line-height:1;";
             delBtn.onclick = (e) => {
                 e.stopPropagation();
-                if (document.getElementById('confirm-pop')) return;
-                var pop = document.createElement('div');
-                pop.id = 'confirm-pop';
-                pop.style.cssText = "position:absolute; right:30px; top:0px; background:#444; color:#fff; padding:4px 8px; border-radius:4px; font-size:11px; z-index:100; display:flex; gap:8px; align-items:center; white-space:nowrap;";
-                pop.innerHTML = `Delete? <span id="del-yes" style="color:#ff5252; font-weight:bold; cursor:pointer;">YES</span> <span id="del-no" style="cursor:pointer;">NO</span>`;
-                row.appendChild(pop);
-                pop.querySelector('#del-yes').onclick = () => {
-                    saved.splice(idx, 1);
-                    localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
-                    renderSavedQueries();
-                };
-                pop.querySelector('#del-no').onclick = () => pop.remove();
+                saved.splice(idx, 1);
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
+                renderSavedQueries();
             };
             row.appendChild(txt);
             row.appendChild(delBtn);
@@ -134,71 +128,66 @@
     }
     renderSavedQueries();
 
-    document.getElementById('close-x').onclick = closePanel;
     document.getElementById('ai-save').onclick = () => {
         var q = tx.value.trim();
         if (!q) return;
         var saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
         if (!saved.includes(q)) {
             saved.unshift(q);
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(saved.slice(0, 50)));
+            if (saved.length > 50) saved.pop();
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
             renderSavedQueries();
         }
     };
+
     document.getElementById('ai-clear').onclick = () => { tx.value = ''; };
+    document.getElementById('close-x').onclick = closePanel;
 
-    document.getElementById('ai-submit').onclick = function() {
-        var btn = this;
-        var rawQ = tx.value.trim();
-        if (!rawQ) return;
+    async function getPromptBin() {
+        try {
+            const response = await fetch('https://muse-score-supporter-diy-jii-ii.vercel.app/prompt.bin');
+            return response.ok ? await response.text() : "";
+        } catch (e) { return ""; }
+    }
 
-        btn.disabled = true;
-        btn.innerText = "Thinking...";
+    document.getElementById('ai-submit').onclick = async () => {
+        var raw = tx.value.trim();
+        if (!raw) return;
 
-        var hasContextReq = /[#＃][Cc][Oo][Nn][Tt][Ee][Xx][Tt]/g.test(rawQ);
-        var contextText = "";
+        var hasContext = /[#＃][Cc][Oo][Nn][Tt][Ee][Xx][Tt]/.test(raw);
+        var cleanBody = raw.replace(/[#＃][Cc][Oo][Nn][Tt][Ee][Xx][Tt]/gi, "").trim();
 
-        if (hasContextReq) {
-            contextText = getCleanContext();
-            if (!contextText) {
-                alert("Could not retrieve context from this page. Search cancelled.");
-                btn.disabled = false;
-                btn.innerText = "AI Search";
-                return;
+        var siteFilter = "";
+        var remainingLines = [];
+        cleanBody.split('\n').forEach(line => {
+            if (line.toLowerCase().startsWith('site:https://')) {
+                var url = line.substring(13).trim();
+                if (url) siteFilter += "site:" + url + " ";
+            } else {
+                remainingLines.push(line);
             }
+        });
+
+        var finalBody = remainingLines.join(' ').trim();
+        var promptBin = await getPromptBin();
+
+        var finalQ = "[QUERY:]" + finalBody;
+        if (hasContext) {
+            finalQ += " [CONTEXT:] " + getCleanContext();
         }
+        finalQ += " [INSTRUCTIONS TO BE FOLLOWED:] " + promptBin;
 
-        fetch('https://muse-score-supporter-diy-jii-ii.vercel.app/prompt.bin?' + Date.now())
-            .then(r => r.text())
-            .then(obfuscated => {
-                var q = rawQ.replace(/[#＃][Cc][Oo][Nn][Tt][Ee][Xx][Tt]/g, "").trim();
-                var siteFilter = getSiteFilter();
-                
-                // Construct the final prompt with instructions and context
-                var finalQuery = "[INSTRUCTIONS TO BE FOLLOWED]\n" + q;
-                if (hasContextReq) {
-                    finalQuery += "\n\n[CONTEXT]\n" + contextText;
-                }
-                finalQuery += "\n\nTarget Sites: " + siteFilter + "\n\nFollow instructions:\n" + obfuscated;
-
-                // Open Google Search with the udm=14/50 parameters
-                window.open("https://www.google.com" + "/search?q=" + encodeURIComponent(finalQuery) + "&udm=50&aep=11", '_blank');
-                
-                btn.disabled = false;
-                btn.innerText = "AI Search";
-            })
-            .catch(err => {
-                alert("Failed to load search instructions.");
-                btn.disabled = false;
-                btn.innerText = "AI Search";
-            });
+        var domainFilter = getSiteFilter();
+        var full = (domainFilter ? domainFilter + " " : "") + (siteFilter ? siteFilter + " " : "") + finalQ;
+        
+        window.open("https://www.google.com" + "/search?q=" + encodeURIComponent(full) + "&udm=50&aep=11", '_blank');
     };
 
     document.getElementById('web-search').onclick = () => {
-        var q = tx.value.replace(/[#＃][Cc][Oo][Nn][Tt][Ee][Xx][Tt]/g, '').trim();
-        if (!q) return;
-        var filter = getSiteFilter();
-        var url = "https://www.google.com" + "/search?q=" + encodeURIComponent(q) + "+(" + encodeURIComponent(filter) + ")";
-        window.open(url, '_blank');
+        var raw = tx.value.trim().replace(/[#＃][Cc][Oo][Nn][Tt][Ee][Xx][Tt]/gi, "");
+        if (!raw) return;
+        var domainFilter = getSiteFilter();
+        var full = (domainFilter ? domainFilter + " " : "") + raw;
+        window.open("https://www.google.com" + "/search?q=" + encodeURIComponent(full), '_blank');
     };
 })();
