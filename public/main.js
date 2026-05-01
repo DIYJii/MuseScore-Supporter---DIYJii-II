@@ -34,8 +34,7 @@
 
     var panel = document.createElement('div');
     panel.id = PANEL_ID;
-    // タスクバー被りを完全に防ぐため高さを確保
-    panel.style.cssText = `position:fixed; top:0; right:0; width:${PANEL_WIDTH}; height:calc(100% - 40px); background:#fcfcfc; border-left:1px solid #ccc; z-index:2147483647; font-family:sans-serif; display:flex; flex-direction:column; box-shadow:-5px 0 15px rgba(0,0,0,0.1);`;
+    panel.style.cssText = `position:fixed; top:0; right:0; width:${PANEL_WIDTH}; height:100%; background:#fcfcfc; border-left:1px solid #ccc; z-index:2147483647; font-family:sans-serif; display:flex; flex-direction:column; box-shadow:-5px 0 15px rgba(0,0,0,0.1); box-sizing:border-box; padding-bottom:60px;`;
 
     var btnBase = "display:flex; align-items:center; justify-content:center; cursor:pointer; border:none; border-radius:4px; font-weight:bold; color:white; box-sizing:border-box;";
 
@@ -47,8 +46,8 @@
         <div id="domain-area" style="padding:2px 15px; background:#fff; border-bottom:1px solid #eee; flex-shrink:0;">
             <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:2px;" id="row-sites"></div>
         </div>
-        <div style="padding:2px 15px 5px 15px; display:flex; flex-direction:column; gap:6px; flex:1; background:rgba(232, 245, 233, 0.4);">
-            <textarea id="ai-query" placeholder="Type your query for AI Search.\nUse '#context' to inject text on the left page.\nSearch on specific URL => Site:https://\nType Key words to do regular search" style="width:100%; height:160px; border:2px solid #bbb; border-radius:6px; padding:8px; font-size:13px; color:#111; resize:none; box-sizing:border-box; outline:none; background:#fff; flex:1;"></textarea>
+        <div style="padding:2px 15px 5px 15px; display:flex; flex-direction:column; gap:6px; flex:0 0 auto; min-height:220px; background:rgba(232, 245, 233, 0.4);">
+            <textarea id="ai-query" placeholder="Type your query for AI Search.\nUse '#context' to include text from the current page.\nTo search within a specific site: Site:https://\nEnter keywords for a standard search." style="width:100%; height:160px; border:2px solid #bbb; border-radius:6px; padding:8px; font-size:13px; color:#111; resize:none; box-sizing:border-box; outline:none; background:#fff;"></textarea>
             <div style="display:flex; gap:8px;">
                 <button id="ai-submit" style="${btnBase} background:${SEARCH_BLUE}; flex:1; height:32px; font-size:12px;">AI Search</button>
                 <button id="web-search" style="${btnBase} background:${SEARCH_BLUE}; flex:1; height:32px; font-size:12px;">Key Words Search</button>
@@ -61,7 +60,7 @@
         <div id="history-container" style="margin:5px 15px; display:flex; flex-direction:column; flex:1; background:rgba(232, 245, 233, 0.4); border:2px solid #bbb; border-radius:6px; overflow:hidden;">
             <div style="flex-grow:1; overflow-y:auto; padding:3px;" id="query-list"></div>
         </div>
-        <div style="padding:5px 8px 10px 8px; text-align:center; font-size:11px; font-weight:bold; color:${MS_DARK_BLUE}; background:#fff; border-top:1px solid #eee; margin-bottom:5px;">Powered by Google AI Search</div>`;
+        <div style="padding:10px 8px; text-align:center; font-size:11px; font-weight:bold; color:${MS_DARK_BLUE}; background:#fff; border-top:1px solid #eee; flex-shrink:0;">Powered by Google AI Search</div>`;
 
     document.body.appendChild(panel);
     document.documentElement.style.width = `calc(100% - ${PANEL_WIDTH})`;
@@ -142,7 +141,7 @@
                 e.preventDefault();
                 var fromIdx = e.dataTransfer.getData('text/plain');
                 var toIdx = idx;
-                var item = saved.splice(fromIdx, 1);
+                var item = saved.splice(fromIdx, 1)[0]; // [0]を追加して配列から抽出
                 saved.splice(toIdx, 0, item);
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
                 renderSavedQueries();
