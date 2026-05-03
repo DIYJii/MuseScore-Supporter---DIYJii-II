@@ -37,7 +37,7 @@
     // 指示通りのスタイルを適用
     panel.style.cssText = `
         position:fixed;
-        top:56px;
+        top:40px;
         bottom:0;
         right:0;
         width:${PANEL_WIDTH};
