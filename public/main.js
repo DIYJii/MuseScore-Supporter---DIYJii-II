@@ -63,7 +63,7 @@
         </div>
         <!-- 上の窓（入力） -->
         <div id="top-area" style="padding:5px 15px; display:flex; flex-direction:column; gap:6px; flex:1; min-height:0; background:rgba(232, 245, 233, 0.4);">
-            <textarea id="ai-query" placeholder="-Type your query for AI Search.&#10;-Use '#context' to include text from the current page.&#10;-To search within a specific site: Site:https://&#10;-Enter keywords for a standard search." style="width:100%; flex:1; border:2px solid #bbb; border-radius:6px; padding:8px; font-size:13px; color:#000; resize:none; box-sizing:border-box; outline:none; background:#fff; overflow-y:auto;"></textarea>
+            <textarea id="ai-query" placeholder="-Type your query for AI Search.&#10;-Use '#context' to refer to the text on the left.&#10;-To search within a specific site: Site:https://&#10;-Enter keywords for a standard search." style="width:100%; flex:1; border:2px solid #bbb; border-radius:6px; padding:8px; font-size:13px; color:#000; resize:none; box-sizing:border-box; outline:none; background:#fff; overflow-y:auto;"></textarea>
             <div style="display:flex; gap:8px; flex-shrink:0;">
                 <button id="ai-submit" style="${btnBase} background:${SEARCH_BLUE}; flex:1;">AI Search</button>
                 <button id="web-search" style="${btnBase} background:${SEARCH_BLUE}; flex:1;">Key Words Search</button>
