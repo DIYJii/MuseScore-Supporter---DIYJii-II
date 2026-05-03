@@ -145,13 +145,16 @@
             row.ondragend = () => { row.style.opacity = '1'; };
             row.ondragover = (e) => { e.preventDefault(); };
             row.ondrop = (e) => {
-                e.preventDefault();
-                var fromIdx = e.dataTransfer.getData('text/plain');
-                var item = saved.splice(fromIdx, 1)[0];
-                saved.splice(idx, 0, item);
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
-                renderSavedQueries();
+               e.preventDefault();
+               var fromIdx = parseInt(e.dataTransfer.getData('text/plain'));
+               var toIdx = idx;
+               if (fromIdx === toIdx) return;
+               var item = saved.splice(fromIdx, 1)[0]; // [0]を付けて確実に要素を取り出す
+               saved.splice(toIdx, 0, item);
+               localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
+               renderSavedQueries();
             };
+
             row.appendChild(txt);
             row.appendChild(delBtn);
             listCont.appendChild(row);
