@@ -28,13 +28,28 @@
         { id: 'com', label: 'MuseScore.com', url: 'musescore.com' },
         { id: 'org', label: 'MuseScore.org', url: 'musescore.org' },
         { id: 'hub', label: 'MuseHub.com', url: 'musehub.com' },
-        { id: 'aud', url: 'audacityteam.org', label: 'Audacityteam' },
-        { id: 'audio', url: 'audio.com', label: 'Audio.com' }
+        { id: 'aud', label: 'Audacityteam', url: 'audacityteam.org' },
+        { id: 'audio', label: 'Audio.com', url: 'audio.com' }
     ];
 
     var panel = document.createElement('div');
     panel.id = PANEL_ID;
-    panel.style.cssText = `position:fixed; top:0; right:0; width:${PANEL_WIDTH}; height:100vh; background:#fcfcfc; border-left:1px solid #ccc; z-index:2147483647; font-family:sans-serif; display:flex; flex-direction:column; box-shadow:-5px 0 15px rgba(0,0,0,0.1); box-sizing:border-box; padding-bottom:50px;`;
+    // 指示通りのスタイルを適用
+    panel.style.cssText = `
+        position:fixed;
+        top:56px;
+        bottom:0;
+        right:0;
+        width:${PANEL_WIDTH};
+        background:#fcfcfc;
+        border-left:1px solid #ccc;
+        z-index:2147483647;
+        font-family:sans-serif;
+        display:flex;
+        flex-direction:column;
+        box-shadow:-5px 0 15px rgba(0,0,0,0.1);
+        box-sizing:border-box;
+    `;
 
     var btnBase = "display:flex; align-items:center; justify-content:center; cursor:pointer; border:none; border-radius:4px; font-weight:bold; color:white; box-sizing:border-box; height:32px; font-size:12px;";
 
@@ -46,8 +61,9 @@
         <div id="domain-area" style="padding:2px 15px; background:#fff; border-bottom:1px solid #eee; flex-shrink:0;">
             <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:2px;" id="row-sites"></div>
         </div>
-        <div id="top-area" style="padding:5px 15px; display:flex; flex-direction:column; gap:6px; height:42%; flex-shrink:0; background:rgba(232, 245, 233, 0.4);">
-            <textarea id="ai-query" placeholder="Type your query for AI Search.\nUse '#context' to include text from the current page.\nTo search within a specific site: Site:https://\nEnter keywords for a standard search." style="width:100%; flex:1; border:2px solid #bbb; border-radius:6px; padding:8px; font-size:13px; color:#111; resize:none; box-sizing:border-box; outline:none; background:#fff; overflow-y:auto;"></textarea>
+        <!-- 上の窓（入力） -->
+        <div id="top-area" style="padding:5px 15px; display:flex; flex-direction:column; gap:6px; flex:1; min-height:0; background:rgba(232, 245, 233, 0.4);">
+            <textarea id="ai-query" placeholder="Type your query for AI Search.&#10;Use '#context' to include text from the current page.&#10;To search within a specific site: Site:https://&#10;Enter keywords for a standard search." style="width:100%; flex:1; border:2px solid #bbb; border-radius:6px; padding:8px; font-size:13px; color:#111; resize:none; box-sizing:border-box; outline:none; background:#fff; overflow-y:auto;"></textarea>
             <div style="display:flex; gap:8px; flex-shrink:0;">
                 <button id="ai-submit" style="${btnBase} background:${SEARCH_BLUE}; flex:1;">AI Search</button>
                 <button id="web-search" style="${btnBase} background:${SEARCH_BLUE}; flex:1;">Key Words Search</button>
@@ -57,7 +73,8 @@
                 <button id="ai-clear" style="${btnBase} background:${CLEAR_RED}; flex:1;">Clear Query</button>
             </div>
         </div>
-        <div id="history-container" style="margin:10px 15px 5px 15px; display:flex; flex-direction:column; height:42%; background:rgba(232, 245, 233, 0.4); border:2px solid #bbb; border-radius:6px; overflow:hidden;">
+        <!-- 下の窓（履歴） -->
+        <div id="history-container" style="margin:5px 15px 10px 15px; display:flex; flex-direction:column; flex:1; min-height:0; background:rgba(232, 245, 233, 0.4); border:2px solid #bbb; border-radius:6px; overflow:hidden;">
             <div style="flex-grow:1; overflow-y:auto; padding:3px;" id="query-list"></div>
         </div>
         <div style="padding:10px 8px; text-align:center; height:40px; font-size:11px; font-weight:bold; color:${MS_DARK_BLUE}; background:#fff; border-top:1px solid #eee; flex-shrink:0;">Powered by Google AI Search</div>`;
@@ -161,8 +178,12 @@
     document.getElementById('ai-submit').onclick = async () => {
         var raw = tx.value.trim();
         if (!raw) return;
+        
+        // 全角・半角両対応で #context をチェック
         var hasContext = /[#＃][Cc][Oo][Nn][Tt][Ee][Xx][Tt]/.test(raw);
+        // 送信文字列からタグを削除
         var cleanBody = raw.replace(/[#＃][Cc][Oo][Nn][Tt][Ee][Xx][Tt]/gi, "").trim();
+
         var siteFilter = "";
         var remainingLines = [];
         cleanBody.split('\n').forEach(line => {
@@ -171,11 +192,18 @@
                 if (url) siteFilter += "site:" + url + " ";
             } else { remainingLines.push(line); }
         });
+
         var finalBody = remainingLines.join(' ').trim();
         var promptBin = await getPromptBin();
+        
+        // 文字列の組み立て（確実に[CONTEXT:]を添付）
         var finalQ = "[QUERY:]" + finalBody;
-        if (hasContext) { finalQ += " [CONTEXT:] " + getCleanContext(); }
+        if (hasContext) { 
+            var pageText = getCleanContext();
+            finalQ += " [CONTEXT:] " + pageText; 
+        }
         finalQ += " [INSTRUCTIONS TO BE FOLLOWED:] " + promptBin;
+
         var domainFilter = getSiteFilter();
         var full = (domainFilter ? domainFilter + " " : "") + (siteFilter ? siteFilter + " " : "") + finalQ;
         window.open("https://www.google.com" + "/search?q=" + encodeURIComponent(full) + "&udm=50&aep=11", '_blank');
