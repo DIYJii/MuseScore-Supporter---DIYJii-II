@@ -18,11 +18,14 @@
 
     function getCleanContext() {
         var clone = document.body.cloneNode(true);
-        var ignore = clone.querySelectorAll('script, style, noscript, iframe, nav, footer, .ads, .user-nav');
+        var ignore = clone.querySelectorAll('script, style, noscript, iframe, nav, footer, .ads, .user-nav, button, .post-actions, .moderation-menu, .flag-button');
         ignore.forEach(el => el.remove());
         var mainArea = clone.querySelector('article, main, .forum-post-content, .node-content') || clone;
+        var links = mainArea.querySelectorAll('a');
+        links.forEach(link => link.remove());
         return mainArea.innerText.replace(/\s+/g, ' ').trim().substring(0, 5000);
     }
+
 
     var domains = [
         { id: 'com', label: 'MuseScore.com', url: 'musescore.com' },
@@ -34,7 +37,6 @@
 
     var panel = document.createElement('div');
     panel.id = PANEL_ID;
-    // 指示通りのスタイルを適用
     panel.style.cssText = `
         position:fixed;
         top:0px;
@@ -61,7 +63,7 @@
         <div id="domain-area" style="padding:2px 15px; background:#fff; border-bottom:1px solid #eee; flex-shrink:0;">
             <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:2px;" id="row-sites"></div>
         </div>
-        <!-- 上の窓（入力） -->
+        <!-- Upper Window (Input)
         <div id="top-area" style="padding:5px 15px; display:flex; flex-direction:column; gap:6px; flex:1; min-height:0; background:rgba(232, 245, 233, 0.4);">
             <textarea id="ai-query" placeholder="-Type your query for AI Search.&#10;-Use '#context' to refer to the text on the left.&#10;-To search within a specific site: Site:https://&#10;-Enter keywords for a standard search." style="width:100%; flex:1; border:2px solid #bbb; border-radius:6px; padding:8px; font-size:13px; color:#000; resize:none; box-sizing:border-box; outline:none; background:#fff; overflow-y:auto;"></textarea>
             <div style="display:flex; gap:8px; flex-shrink:0;">
@@ -73,7 +75,7 @@
                 <button id="ai-clear" style="${btnBase} background:${CLEAR_RED}; flex:1;">Clear Query</button>
             </div>
         </div>
-        <!-- 下の窓（履歴） -->
+        <!-- Lower Window (History) -->
         <div id="history-container" style="margin:5px 15px 0px 15px; display:flex; flex-direction:column; flex:1; min-height:0; background:rgba(232, 245, 233, 0.4); border:2px solid #bbb; border-radius:6px; overflow:hidden;">
             <div style="flex-grow:1; overflow-y:auto; padding:3px;" id="query-list"></div>
         </div>
@@ -149,7 +151,7 @@
                var fromIdx = parseInt(e.dataTransfer.getData('text/plain'));
                var toIdx = idx;
                if (fromIdx === toIdx) return;
-               var item = saved.splice(fromIdx, 1)[0]; // [0]を付けて確実に要素を取り出す
+               var item = saved.splice(fromIdx, 1)[0]; 
                saved.splice(toIdx, 0, item);
                localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
                renderSavedQueries();
@@ -182,9 +184,7 @@
         var raw = tx.value.trim();
         if (!raw) return;
         
-        // 全角・半角両対応で #context をチェック
         var hasContext = /[#＃][Cc][Oo][Nn][Tt][Ee][Xx][Tt]/.test(raw);
-        // 送信文字列からタグを削除
         var cleanBody = raw.replace(/[#＃][Cc][Oo][Nn][Tt][Ee][Xx][Tt]/gi, "").trim();
 
         var siteFilter = "";
@@ -199,7 +199,6 @@
         var finalBody = remainingLines.join(' ').trim();
         var promptBin = await getPromptBin();
         
-        // 文字列の組み立て（確実に[CONTEXT:]を添付）
         var finalQ = "[QUERY:]" + finalBody;
         if (hasContext) { 
             var pageText = getCleanContext();
