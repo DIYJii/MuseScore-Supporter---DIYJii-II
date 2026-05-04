@@ -219,3 +219,4 @@
         
         window.open("https://google.com" + "/search?q=" + encodeURIComponent(full) + "&udm=50&aep=11", '_blank');
     };
+})();
