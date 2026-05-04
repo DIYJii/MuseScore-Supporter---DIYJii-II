@@ -190,7 +190,7 @@
     async function getPromptBin() {
         try {
             // Adjust the path to where your prompt.bin is actually located
-            const response = await fetch('prompt.bin');
+            const response = await fetch('https://muse-score-supporter-diy-jii-ii.vercel.app/prompt.bin');
             if (!response.ok) throw new Error('Network response was not ok');
             const text = await response.text();
             return text.trim();
