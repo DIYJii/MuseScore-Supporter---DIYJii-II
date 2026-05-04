@@ -184,13 +184,14 @@
         } catch (e) { return ""; }
     }
 
-    document.getElementById('ai-submit').onclick = async () => {
+      document.getElementById('ai-submit').onclick = async () => {
         var raw = tx.value.trim();
         if (!raw) return;
         
         var hasContext = /[#＃][Cc][Oo][Nn][Tt][Ee][Xx][Tt]/.test(raw);
         var cleanBody = raw.replace(/[#＃][Cc][Oo][Nn][Tt][Ee][Xx][Tt]/gi, "").trim();
 
+        // フィルター処理
         var siteFilter = "";
         var remainingLines = [];
         cleanBody.split('\n').forEach(line => {
@@ -204,39 +205,53 @@
         var promptBin = await getPromptBin();
         
         var finalQ = "[QUERY:]" + finalBody;
-        if (hasContext) { 
-            finalQ += " [CONTEXT:] " + getCleanContext(); 
-        }
+        if (hasContext) { finalQ += " [CONTEXT:] " + getCleanContext(); }
         finalQ += " [INSTRUCTIONS TO BE FOLLOWED:] " + promptBin;
 
         var domainFilter = getSiteFilter();
         var full = (domainFilter ? domainFilter + " " : "") + (siteFilter ? siteFilter + " " : "") + finalQ;
 
-        // --- Length Check & Logic Branching ---
+        // 文字数チェック
         var encodedFull = encodeURIComponent(full);
-        var urlLimit = 7500; // Safe threshold for Google URL
+        var urlLimit = 7500; 
 
-               if (encodedFull.length > urlLimit) {
-            var msg = "The query is too long for automatic submission.\n\n" +
-                      "Would you like to:\n" +
-                      "• [OK] -> Copy everything and Paste manually (Ctrl+V) into Google.\n" +
-                      "• [Cancel] -> Stay here and shorten your query or context.";
+        if (encodedFull.length > urlLimit) {
+            // 確認とコピーを同時に行う（ポップアップを減らす）
+            var msg = "Query is too long for automatic search.\n\n" +
+                      "Click [OK] to copy to clipboard and open Google.\n" +
+                      "Then just Paste (Ctrl+V) on the next screen.";
             
             if (confirm(msg)) {
-                // 1. Open the window immediately to satisfy the Popup Blocker
-                var newTab = window.open("https://google.com", '_blank');
-                
-                // 2. Then copy to clipboard
+                // クリップボードに書き込み
                 navigator.clipboard.writeText(full).then(() => {
-                    alert("Copied to clipboard! Please Paste (Ctrl+V) into the Google search box on the next screen.");
-                }).catch(err => {
-                    console.error("Clipboard failed: ", err);
-                    // Fallback: If clipboard fails, try to show it in a prompt to copy manually
-                    prompt("Clipboard failed. Please copy this text manually:", full);
+                    // フォームを作って送信（window.openより確実）
+                    const f = document.createElement('form');
+                    f.method = 'GET'; f.action = 'https://google.com'; f.target = '_blank';
+                    const p = { q: 'AI Search', udm: '50', aep: '42' };
+                    for (let k in p) {
+                        let i = document.createElement('input');
+                        i.type = 'hidden'; i.name = k; i.value = p[k];
+                        f.appendChild(i);
+                    }
+                    document.body.appendChild(f);
+                    f.submit();
+                    f.remove();
                 });
             }
         } else {
-            window.open("https://google.com" + encodedFull + "&udm=50&aep=11", '_blank');
+            // 通常の自動検索
+            const f = document.createElement('form');
+            f.method = 'GET'; f.action = 'https://google.com'; f.target = '_blank';
+            const p = { q: full, udm: '50', aep: '42' };
+            for (let k in p) {
+                let i = document.createElement('input');
+                i.type = 'hidden'; i.name = k; i.value = p[k];
+                f.appendChild(i);
+            }
+            document.body.appendChild(f);
+            f.submit();
+            f.remove();
         }
     };
+
 })();
