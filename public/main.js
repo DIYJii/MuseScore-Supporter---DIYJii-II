@@ -176,7 +176,29 @@
         });
     }
     renderSavedQueries();
+    
+    document.getElementById('ai-save').onclick = () => {
+        var q = tx.value.trim();
+        if (!q) return;
+        var saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+        if (!saved.includes(q)) { saved.unshift(q); localStorage.setItem(STORAGE_KEY, JSON.stringify(saved)); renderSavedQueries(); }
+    };
+    document.getElementById('ai-clear').onclick = () => { tx.value = ''; };
+    document.getElementById('close-x').onclick = closePanel;
 
+        // Add this function to fetch your prompt.bin file
+    async function getPromptBin() {
+        try {
+            // Adjust the path to where your prompt.bin is actually located
+            const response = await fetch('prompt.bin');
+            if (!response.ok) throw new Error('Network response was not ok');
+            const text = await response.text();
+            return text.trim();
+        } catch (error) {
+            console.error("Failed to fetch prompt.bin:", error);
+            return ""; // Return empty string if file is missing
+        }
+    }
         document.getElementById('ai-submit').onclick = async () => {
         var raw = tx.value.trim();
         if (!raw) return;
