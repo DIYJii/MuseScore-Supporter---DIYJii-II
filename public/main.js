@@ -18,14 +18,11 @@
 
     function getCleanContext() {
         var clone = document.body.cloneNode(true);
-        var ignore = clone.querySelectorAll('script, style, noscript, iframe, nav, footer, .ads, .user-nav, button, .post-actions, .moderation-menu, .flag-button');
+        var ignore = clone.querySelectorAll('script, style, noscript, iframe, nav, footer, .ads, .user-nav, button, a, .post-actions, .moderation-menu, .flag-button');
         ignore.forEach(el => el.remove());
         var mainArea = clone.querySelector('article, main, .forum-post-content, .node-content') || clone;
-        var links = mainArea.querySelectorAll('a');
-        links.forEach(link => link.remove());
         return mainArea.innerText.replace(/\s+/g, ' ').trim().substring(0, 5000);
     }
-
 
     var domains = [
         { id: 'com', label: 'MuseScore.com', url: 'musescore.com' },
@@ -63,7 +60,6 @@
         <div id="domain-area" style="padding:2px 15px; background:#fff; border-bottom:1px solid #eee; flex-shrink:0;">
             <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:2px;" id="row-sites"></div>
         </div>
-        <!-- Upper Window (Input)
         <div id="top-area" style="padding:5px 15px; display:flex; flex-direction:column; gap:6px; flex:1; min-height:0; background:rgba(232, 245, 233, 0.4);">
             <textarea id="ai-query" placeholder="-Type your query for AI Search.&#10;-Use '#context' to refer to the text on the left.&#10;-To search within a specific site: Site:https://&#10;-Enter keywords for a standard search." style="width:100%; flex:1; border:2px solid #bbb; border-radius:6px; padding:8px; font-size:13px; color:#000; resize:none; box-sizing:border-box; outline:none; background:#fff; overflow-y:auto;"></textarea>
             <div style="display:flex; gap:8px; flex-shrink:0;">
