@@ -274,4 +274,11 @@
             f.remove();
         }
     };
+    document.getElementById('web-search').onclick = () => {
+        var raw = tx.value.trim().replace(/[#＃][Cc][Oo][Nn][Tt][Ee][Xx][Tt]/gi, "");
+        if (!raw) return;
+        var domainFilter = getSiteFilter();
+        var full = (domainFilter ? domainFilter + " " : "") + raw;
+        window.open("https://www.google.com" + "/search?q=" + encodeURIComponent(full), '_blank');
+    };
 })();
