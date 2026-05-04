@@ -230,7 +230,7 @@
             }
             // If Cancel, it stays on the current screen for editing
         } else {
-            window.open("https://google.com" + encodedFull + "&udm=50&aep=11", '_blank');
+            window.open("https://google.com" + "/search?q=" + encodedFull + "&udm=50&aep=11", '_blank');
         }
 
     };
