@@ -213,33 +213,9 @@
         var domainFilter = getSiteFilter();
         var full = (domainFilter ? domainFilter + " " : "") + (siteFilter ? siteFilter + " " : "") + finalQ;
 
-        // --- BUGデバッグ用ツール開始 ---
-        console.group("【AI Search デバッグ情報】");
-        console.log("総文字数（エンコード前）:", full.length);
-        var encodedUrl = "https://google.com" + encodeURIComponent(full) + "&udm=50&aep=11";
-        console.log("最終URL長さ:", encodedUrl.length);
-        console.log("送信フルデータ:", full);
+        // --- BUGデバッグ用ツール ---
+        // 送信直前にポップアップで内容を表示し、コピーできるようにします
+        prompt("送信データをコピー（Ctrl+C）して私に送ってください", full);
         
-        // クリップボードにコピー
-        navigator.clipboard.writeText(full).then(() => {
-            console.log(">>> 送信データをクリップボードにコピーしました。400エラーが出る場合は、このままチャット欄に貼り付けて教えてください。");
-        }).catch(err => console.warn("コピー失敗:", err));
-        console.groupEnd();
-        // --- BUGデバッグ用ツール終了 ---
-
-        // 制限チェック（一般的なブラウザ制限は約8000〜32000文字ですが、Google検索は2000〜8000文字で切れることがあります）
-        if (encodedUrl.length > 8000) {
-            alert("警告: データが長すぎます（" + encodedUrl.length + "文字）。#context の内容を減らす必要があるかもしれません。");
-        }
-
-        window.open("https://www.google.com" + "/search?q=" + encodeURIComponent(full) + "&udm=50&aep=11", '_blank');
+        window.open("https://google.com" + "/search?q=" + encodeURIComponent(full) + "&udm=50&aep=11", '_blank');
     };
-
-    document.getElementById('web-search').onclick = () => {
-        var raw = tx.value.trim().replace(/[#＃][Cc][Oo][Nn][Tt][Ee][Xx][Tt]/gi, "");
-        if (!raw) return;
-        var domainFilter = getSiteFilter();
-        var full = (domainFilter ? domainFilter + " " : "") + raw;
-        window.open("https://www.google.com" + "/search?q=" + encodeURIComponent(full), '_blank');
-    };
-})();
