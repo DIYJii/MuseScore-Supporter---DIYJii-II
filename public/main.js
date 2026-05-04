@@ -177,30 +177,14 @@
     }
     renderSavedQueries();
 
-    document.getElementById('ai-save').onclick = () => {
-        var q = tx.value.trim();
-        if (!q) return;
-        var saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-        if (!saved.includes(q)) { saved.unshift(q); localStorage.setItem(STORAGE_KEY, JSON.stringify(saved)); renderSavedQueries(); }
-    };
-    document.getElementById('ai-clear').onclick = () => { tx.value = ''; };
-    document.getElementById('close-x').onclick = closePanel;
-
-    async function getPromptBin() {
-        try {
-            const response = await fetch('https://muse-score-supporter-diy-jii-ii.vercel.app/prompt.bin');
-            return response.ok ? await response.text() : "";
-        } catch (e) { return ""; }
-    }
-
-      document.getElementById('ai-submit').onclick = async () => {
+        document.getElementById('ai-submit').onclick = async () => {
         var raw = tx.value.trim();
         if (!raw) return;
         
         var hasContext = /[#＃][Cc][Oo][Nn][Tt][Ee][Xx][Tt]/.test(raw);
         var cleanBody = raw.replace(/[#＃][Cc][Oo][Nn][Tt][Ee][Xx][Tt]/gi, "").trim();
 
-        // フィルター処理
+        // サイトフィルター処理
         var siteFilter = "";
         var remainingLines = [];
         cleanBody.split('\n').forEach(line => {
@@ -220,23 +204,27 @@
         var domainFilter = getSiteFilter();
         var full = (domainFilter ? domainFilter + " " : "") + (siteFilter ? siteFilter + " " : "") + finalQ;
 
-        // 文字数チェック
+        // 文字数制限チェック（エンコード後の長さで判定）
         var encodedFull = encodeURIComponent(full);
         var urlLimit = 7500; 
 
         if (encodedFull.length > urlLimit) {
-            // 確認とコピーを同時に行う（ポップアップを減らす）
-            var msg = "Query is too long for automatic search.\n\n" +
-                      "Click [OK] to copy to clipboard and open Google.\n" +
-                      "Then just Paste (Ctrl+V) on the next screen.";
+            // 長文時の手動モード
+            var msg = "The query is too long for automatic submission.\n\n" +
+                      "Would you like to:\n" +
+                      "• [OK] -> Copy everything and Paste manually (Ctrl+V) into Google.\n" +
+                      "• [Cancel] -> Stay here and shorten your query or context.";
             
             if (confirm(msg)) {
                 // クリップボードに書き込み
                 navigator.clipboard.writeText(full).then(() => {
-                    // フォームを作って送信（window.openより確実）
+                    // Google AI 画面を立ち上げる（ご提示のパラメータを使用）
                     const f = document.createElement('form');
-                    f.method = 'GET'; f.action = 'https://google.com'; f.target = '_blank';
-                    const p = { q: 'AI Search', udm: '50', aep: '42' };
+                    f.method = 'GET';
+                    f.action = 'https://www.google.com/search';
+                    f.target = '_blank';
+                    // 検索ワードは空（またはダミー）でAI画面だけ呼び出す
+                    const p = { q: 'AI Search', udm: '50', aep: '42', sourceid: 'chrome', source: 'chrome.crn.rb' };
                     for (let k in p) {
                         let i = document.createElement('input');
                         i.type = 'hidden'; i.name = k; i.value = p[k];
@@ -248,10 +236,12 @@
                 });
             }
         } else {
-            // 通常の自動検索
+            // 自動検索モード（ご提示のパラメータを使用）
             const f = document.createElement('form');
-            f.method = 'GET'; f.action = 'https://google.com'; f.target = '_blank';
-            const p = { q: full, udm: '50', aep: '42' };
+            f.method = 'GET';
+            f.action = 'https://www.google.com/search';
+            f.target = '_blank';
+            const p = { q: full, udm: '50', aep: '42', sourceid: 'chrome', source: 'chrome.crn.rb' };
             for (let k in p) {
                 let i = document.createElement('input');
                 i.type = 'hidden'; i.name = k; i.value = p[k];
@@ -262,5 +252,4 @@
             f.remove();
         }
     };
-
 })();
