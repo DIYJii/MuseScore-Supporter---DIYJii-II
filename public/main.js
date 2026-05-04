@@ -216,22 +216,27 @@
         var encodedFull = encodeURIComponent(full);
         var urlLimit = 7500; // Safe threshold for Google URL
 
-        if (encodedFull.length > urlLimit) {
+               if (encodedFull.length > urlLimit) {
             var msg = "The query is too long for automatic submission.\n\n" +
                       "Would you like to:\n" +
                       "• [OK] -> Copy everything and Paste manually (Ctrl+V) into Google.\n" +
                       "• [Cancel] -> Stay here and shorten your query or context.";
             
             if (confirm(msg)) {
+                // 1. Open the window immediately to satisfy the Popup Blocker
+                var newTab = window.open("https://google.com", '_blank');
+                
+                // 2. Then copy to clipboard
                 navigator.clipboard.writeText(full).then(() => {
                     alert("Copied to clipboard! Please Paste (Ctrl+V) into the Google search box on the next screen.");
-                    window.open("https://google.com", '_blank');
+                }).catch(err => {
+                    console.error("Clipboard failed: ", err);
+                    // Fallback: If clipboard fails, try to show it in a prompt to copy manually
+                    prompt("Clipboard failed. Please copy this text manually:", full);
                 });
             }
-            // If Cancel, it stays on the current screen for editing
         } else {
-            window.open("https://google.com" + "/search?q=" + encodedFull + "&udm=50&aep=11", '_blank');
+            window.open("https://google.com" + encodedFull + "&udm=50&aep=11", '_blank');
         }
-
     };
 })();
