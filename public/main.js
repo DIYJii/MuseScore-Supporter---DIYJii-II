@@ -205,18 +205,34 @@
         
         var finalQ = "[QUERY:]" + finalBody;
         if (hasContext) { 
-            var pageText = getCleanContext();
-            finalQ += " [CONTEXT:] " + pageText; 
+            finalQ += " [CONTEXT:] " + getCleanContext(); 
         }
         finalQ += " [INSTRUCTIONS TO BE FOLLOWED:] " + promptBin;
 
         var domainFilter = getSiteFilter();
         var full = (domainFilter ? domainFilter + " " : "") + (siteFilter ? siteFilter + " " : "") + finalQ;
 
-        // --- BUGデバッグ用ツール ---
-        // 送信直前にポップアップで内容を表示し、コピーできるようにします
-        prompt("送信データをコピー（Ctrl+C）して私に送ってください", full);
-        
-        window.open("https://google.com" + "/search?q=" + encodeURIComponent(full) + "&udm=50&aep=11", '_blank');
+        // --- Length Check & Logic Branching ---
+        var encodedFull = encodeURIComponent(full);
+        var urlLimit = 7500; // Safe threshold for Google URL
+
+        if (encodedFull.length > urlLimit) {
+            var msg = "The query is too long for automatic submission.\n\n" +
+                      "Would you like to:\n" +
+                      "• [OK] -> Copy everything and Paste manually (Ctrl+V) into Google.\n" +
+                      "• [Cancel] -> Stay here and shorten your query or context.";
+            
+            if (confirm(msg)) {
+                navigator.clipboard.writeText(full).then(() => {
+                    alert("Copied to clipboard! Please Paste (Ctrl+V) into the Google search box on the next screen.");
+                    window.open("https://google.com", '_blank');
+                });
+            }
+            // If Cancel, it stays on the current screen for editing
+        } else {
+            window.open("https://google.com" + encodedFull + "&udm=50&aep=11", '_blank');
+        }
+
     };
-})();
+
+
