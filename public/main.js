@@ -16,13 +16,21 @@
         if (p) p.remove();
     }
 
-    function getCleanContext() {
+        function getCleanContext() {
         var clone = document.body.cloneNode(true);
-        var ignore = clone.querySelectorAll('script, style, noscript, iframe, nav, footer, .ads, .user-nav, button, a, .post-actions, .moderation-menu, .flag-button');
+        var ignore = clone.querySelectorAll('script, style, noscript, iframe, nav, footer, .ads, .user-nav, button, .post-actions, .moderation-menu, .flag-button');
         ignore.forEach(el => el.remove());
+        
         var mainArea = clone.querySelector('article, main, .forum-post-content, .node-content') || clone;
+        var links = mainArea.querySelectorAll('a');
+        links.forEach(link => {
+            var textNode = document.createTextNode(link.innerText);
+            link.parentNode.replaceChild(textNode, link);
+        });
+
         return mainArea.innerText.replace(/\s+/g, ' ').trim().substring(0, 5000);
     }
+
 
     var domains = [
         { id: 'com', label: 'MuseScore.com', url: 'musescore.com' },
@@ -204,6 +212,26 @@
 
         var domainFilter = getSiteFilter();
         var full = (domainFilter ? domainFilter + " " : "") + (siteFilter ? siteFilter + " " : "") + finalQ;
+
+        // --- BUGデバッグ用ツール開始 ---
+        console.group("【AI Search デバッグ情報】");
+        console.log("総文字数（エンコード前）:", full.length);
+        var encodedUrl = "https://google.com" + encodeURIComponent(full) + "&udm=50&aep=11";
+        console.log("最終URL長さ:", encodedUrl.length);
+        console.log("送信フルデータ:", full);
+        
+        // クリップボードにコピー
+        navigator.clipboard.writeText(full).then(() => {
+            console.log(">>> 送信データをクリップボードにコピーしました。400エラーが出る場合は、このままチャット欄に貼り付けて教えてください。");
+        }).catch(err => console.warn("コピー失敗:", err));
+        console.groupEnd();
+        // --- BUGデバッグ用ツール終了 ---
+
+        // 制限チェック（一般的なブラウザ制限は約8000〜32000文字ですが、Google検索は2000〜8000文字で切れることがあります）
+        if (encodedUrl.length > 8000) {
+            alert("警告: データが長すぎます（" + encodedUrl.length + "文字）。#context の内容を減らす必要があるかもしれません。");
+        }
+
         window.open("https://www.google.com" + "/search?q=" + encodeURIComponent(full) + "&udm=50&aep=11", '_blank');
     };
 
