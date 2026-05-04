@@ -16,20 +16,29 @@
         if (p) p.remove();
     }
 
-        function getCleanContext() {
+            function getCleanContext() {
         var clone = document.body.cloneNode(true);
+        // 1. 不要な要素（ボタンやメニュー等）を物理的に削除
         var ignore = clone.querySelectorAll('script, style, noscript, iframe, nav, footer, .ads, .user-nav, button, .post-actions, .moderation-menu, .flag-button');
         ignore.forEach(el => el.remove());
         
         var mainArea = clone.querySelector('article, main, .forum-post-content, .node-content') || clone;
+        
+        // 2. aタグ（リンク）の処理：画面に見えているテキストだけを救出する
         var links = mainArea.querySelectorAll('a');
         links.forEach(link => {
-            var textNode = document.createTextNode(link.innerText);
-            link.parentNode.replaceChild(textNode, link);
+            // offsetParentがnull、またはdisplayがnoneの隠し要素は無視して削除
+            if (link.offsetWidth > 0 || link.offsetHeight > 0) {
+                var textNode = document.createTextNode(link.innerText);
+                link.parentNode.replaceChild(textNode, link);
+            } else {
+                link.remove(); // 隠れている「mark as spam」等はここで消える
+            }
         });
 
         return mainArea.innerText.replace(/\s+/g, ' ').trim().substring(0, 5000);
     }
+
 
 
     var domains = [
