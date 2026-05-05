@@ -246,7 +246,7 @@
                     f.action = 'https://www.google.com/search';
                     f.target = '_blank';
                     // 検索ワードは空（またはダミー）でAI画面だけ呼び出す
-                    const p = { q: 'AI Search', udm: '50', aep: '42', sourceid: 'chrome', source: 'chrome.crn.rb' };
+                    const p = { q: 'AI Search', udm: '50', aep: '11', sourceid: 'chrome', source: 'chrome.crn.rb' };
                     for (let k in p) {
                         let i = document.createElement('input');
                         i.type = 'hidden'; i.name = k; i.value = p[k];
@@ -263,7 +263,7 @@
             f.method = 'GET';
             f.action = 'https://www.google.com/search';
             f.target = '_blank';
-            const p = { q: full, udm: '50', aep: '42', sourceid: 'chrome', source: 'chrome.crn.rb' };
+            const p = { q: full, udm: '50', aep: '11', sourceid: 'chrome', source: 'chrome.crn.rb' };
             for (let k in p) {
                 let i = document.createElement('input');
                 i.type = 'hidden'; i.name = k; i.value = p[k];
