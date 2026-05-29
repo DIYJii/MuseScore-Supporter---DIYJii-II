@@ -110,7 +110,7 @@
     async function checkVercelPromptExists(promptName) {
         try {
             // 仮として、常に存在する（true）と仮定。検証する場合は実際のURLへfetch等を行う
-            let res = await fetch('https://muse-score-supporter-diy-jii-ii.vercel.app/${promptName}.bin`, { method: 'HEAD' });
+            let res = await fetch(`https://muse-score-supporter-diy-jii-ii.vercel.app/${promptName}.bin`, { method: 'HEAD' });
             return res.ok;
             return true; 
         } catch(e) {
