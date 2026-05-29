@@ -1,8 +1,6 @@
 (function() {
     var PANEL_WIDTH = '380px';
     var PANEL_ID = 'my-ai-sidebar';
-    var STORAGE_KEY = 'musescore_saved_queries';
-    var DOMAIN_KEY = 'musescore_selected_domains';
     var MS_DARK_BLUE = '#172b4d'; 
     var MS_LIGHT_BLUE = '#eef2f7';
     var SEARCH_BLUE = '#0d47a1'; 
@@ -16,38 +14,48 @@
         if (p) p.remove();
     }
 
-            function getCleanContext() {
+    function getCleanContext() {
         var clone = document.body.cloneNode(true);
-        // 1. 不要な要素（ボタンやメニュー等）を物理的に削除
         var ignore = clone.querySelectorAll('script, style, noscript, iframe, nav, footer, .ads, .user-nav, button, .post-actions, .moderation-menu, .flag-button');
         ignore.forEach(el => el.remove());
         
         var mainArea = clone.querySelector('article, main, .forum-post-content, .node-content') || clone;
         
-        // 2. aタグ（リンク）の処理：画面に見えているテキストだけを救出する
         var links = mainArea.querySelectorAll('a');
         links.forEach(link => {
-            // offsetParentがnull、またはdisplayがnoneの隠し要素は無視して削除
             if (link.offsetWidth > 0 || link.offsetHeight > 0) {
                 var textNode = document.createTextNode(link.innerText);
                 link.parentNode.replaceChild(textNode, link);
             } else {
-                link.remove(); // 隠れている「mark as spam」等はここで消える
+                link.remove();
             }
         });
 
         return mainArea.innerText.replace(/\s+/g, ' ').trim().substring(0, 5000);
     }
 
+    // 2. 新しいDomain（ボタン名）の定義
+    var domains = ["General", "Subscriptions", "Web Operations", "Notations", "Scores", "TbD"];
+    
+    // 6. 各ドメインに対応する個別のローカルストレージ用キー定義
+    var STORAGE_KEYS = {
+        "General": "musescore_saved_queries_General",
+        "Subscriptions": "musescore_saved_queries_Subscriptions",
+        "Web Operations": "musescore_saved_queries_Web_Operations",
+        "Notations": "musescore_saved_queries_Notations",
+        "Scores": "musescore_saved_queries_Scores",
+        "TbD": "musescore_saved_queries_TbD"
+    };
+    
+    // トグル状態管理用（初期値は"General"）
+    var activeDomain = "General";
 
-
-    var domains = [
-        { id: 'com', label: 'MuseScore.com', url: 'musescore.com' },
-        { id: 'org', label: 'MuseScore.org', url: 'musescore.org' },
-        { id: 'hub', label: 'MuseHub.com', url: 'musehub.com' },
-        { id: 'aud', label: 'Audacityteam', url: 'audacityteam.org' },
-        { id: 'audio', label: 'Audio.com', url: 'audio.com' }
-    ];
+    // 10. メインロード時の初期情報検出（Domainとブラウザ言語）
+    var initialDomain = window.location.hostname || "musescore.com";
+    var initialLanguage = (navigator.language || navigator.userLanguage || "en").split('-')[0];
+    
+    // 11. 送信用ヘッダーテキストの自動生成
+    var aiHeaderPrompt = `\\Language = ${initialLanguage}; \\CurrentSite = ${initialDomain};\n`;
 
     var panel = document.createElement('div');
     panel.id = PANEL_ID;
@@ -78,7 +86,7 @@
             <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:2px;" id="row-sites"></div>
         </div>
         <div id="top-area" style="padding:5px 15px; display:flex; flex-direction:column; gap:6px; flex:1; min-height:0; background:rgba(232, 245, 233, 0.4);">
-            <textarea id="ai-query" placeholder="-Type your query for AI Search.&#10;-Use '#context' to refer to the text on the left.&#10;-To search within a specific site: Site:https://&#10;-Enter keywords for a standard search." style="width:100%; flex:1; border:2px solid #bbb; border-radius:6px; padding:8px; font-size:13px; color:#000; resize:none; box-sizing:border-box; outline:none; background:#fff; overflow-y:auto;"></textarea>
+            <textarea id="ai-query" placeholder="-Type your query for AI Search.\n-Use '#context' to refer to the text on the left.\n-To search within a specific site: Site:https://\n-Enter keywords for a standard search." style="width:100%; flex:1; border:2px solid #bbb; border-radius:6px; padding:8px; font-size:13px; color:#000; resize:none; box-sizing:border-box; outline:none; background:#fff; overflow-y:auto;"></textarea>
             <div style="display:flex; gap:8px; flex-shrink:0;">
                 <button id="ai-submit" style="${btnBase} background:${SEARCH_BLUE}; flex:1;">AI Search</button>
                 <button id="web-search" style="${btnBase} background:${SEARCH_BLUE}; flex:1;">Key Words Search</button>
@@ -98,187 +106,108 @@
     document.documentElement.style.width = `calc(100% - ${PANEL_WIDTH})`;
 
     var tx = document.getElementById('ai-query');
-    var selected = JSON.parse(localStorage.getItem(DOMAIN_KEY) || '{"all":true}');
 
+    // 5 & 9. Vercelの.binファイル存在チェック用（ダミー関数：実環境に合わせてFetch等に変更可能）
+    function checkVercelPromptDeployed(domainName) {
+        // 例: Web Operations などのスペースをエンコードして検証URLを作成
+        // 擬似的に、特定条件（例: 'TbD' など）を未アップロードエラーテスト用としてfalseにできます。
+        // ここでは仕様通り、検証結果をBooleanで返します。
+        if (domainName === "TbD") {
+            return false; // テスト用にTbDのみ未デプロイ状態を再現
+        }
+        return true; 
+    }
+
+    // 3 & 7. ボタン切り替え処理（トグル・ロード連携）
     function renderToggles() {
         var container = document.getElementById('row-sites');
         container.innerHTML = '';
-        var list = [...domains, {id:'all', label:'ALL'}];
-        list.forEach(d => {
+        
+        domains.forEach(dName => {
             var btn = document.createElement('button');
-            btn.innerText = d.label;
-            var isOn = selected[d.id];
+            btn.innerText = dName;
+            var isOn = (activeDomain === dName);
             btn.style.cssText = btnBase + `height:28px; font-size:11px; margin:1px 0; background:${isOn ? MS_DARK_BLUE : MS_LIGHT_BLUE}; color:${isOn ? '#fff' : MS_DARK_BLUE}; border:1px solid ${MS_DARK_BLUE};`;
+            
             btn.onclick = () => {
-                if (d.id === 'all') { selected = { all: true }; } 
-                else {
-                    delete selected.all;
-                    selected[d.id] = !selected[d.id];
-                    if (!selected[d.id]) delete selected[d.id];
-                    if (Object.keys(selected).length === 0) selected.all = true;
+                // 9. Vercelに登録されていない場合は切り替えない
+                if (!checkVercelPromptDeployed(dName)) {
+                    alert("Prompt to be defined");
+                    return;
                 }
-                localStorage.setItem(DOMAIN_KEY, JSON.stringify(selected));
+                activeDomain = dName;
                 renderToggles();
+                renderSavedQueries(); // 7. オンになったボタンに合わせてロード
             };
             container.appendChild(btn);
         });
     }
-    renderToggles();
 
-    function getSiteFilter() {
-        if (selected.all) return ""; 
-        return domains.filter(d => selected[d.id]).map(d => "site:" + d.url).join(" OR ");
-    }
-
+    // 7. 下のウィンドウへのデータロード
     function renderSavedQueries() {
         var listCont = document.getElementById('query-list');
         listCont.innerHTML = '';
-        var saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-        saved.forEach((q, idx) => {
+        
+        var currentKey = STORAGE_KEYS[activeDomain];
+        var savedText = localStorage.getItem(currentKey) || "";
+        
+        if (savedText) {
             var row = document.createElement('div');
-            row.draggable = true;
-            row.style.cssText = "background:#fff; border-bottom:1px solid #eee; padding:2px 8px; font-size:11px; color:#000; display:flex; align-items:center; height:22px; box-sizing:border-box; position:relative; cursor:grab;";
+            row.style.cssText = "background:#fff; border-bottom:1px solid #eee; padding:5px 8px; font-size:11px; color:#000; display:flex; align-items:center; min-height:22px; box-sizing:border-box; cursor:pointer;";
+            
             var txt = document.createElement('span');
-            txt.style.cssText = "flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:pointer;";
-            txt.innerText = "- " + q.replace(/\n/g, ' ');
-            txt.onclick = () => { tx.value = q; };
-            var delBtn = document.createElement('button');
-            delBtn.innerHTML = '&times;';
-            delBtn.style.cssText = "background:none; color:#aaa; border:none; cursor:pointer; font-size:16px; padding:0 3px; line-height:1;";
-            delBtn.onclick = (e) => {
-                e.stopPropagation();
-                if (document.getElementById('confirm-pop')) return;
-                var pop = document.createElement('div');
-                pop.id = 'confirm-pop';
-                pop.style.cssText = `position:absolute; right:30px; background:#455a64; color:#fff; padding:2px 8px; border-radius:4px; font-size:10px; display:flex; gap:6px; align-items:center; z-index:10;`;
-                pop.innerHTML = `<span>Delete?</span><b id="del-yes" style="cursor:pointer; color:#ff8a65;">YES</b><b id="del-no" style="cursor:pointer;">NO</b><div style="position:absolute; right:-6px; top:6px; border-top:5px solid transparent; border-bottom:5px solid transparent; border-left:6px solid #455a64;"></div>`;
-                pop.querySelector('#del-yes').onclick = () => { saved.splice(idx, 1); localStorage.setItem(STORAGE_KEY, JSON.stringify(saved)); renderSavedQueries(); };
-                pop.querySelector('#del-no').onclick = () => pop.remove();
-                row.appendChild(pop);
+            txt.style.cssText = "flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;";
+            txt.innerText = savedText;
+            
+            row.onclick = function() {
+                tx.value = savedText;
             };
-            row.ondragstart = (e) => { e.dataTransfer.setData('text/plain', idx); row.style.opacity = '0.5'; };
-            row.ondragend = () => { row.style.opacity = '1'; };
-            row.ondragover = (e) => { e.preventDefault(); };
-            row.ondrop = (e) => {
-               e.preventDefault();
-               var fromIdx = parseInt(e.dataTransfer.getData('text/plain'));
-               var toIdx = idx;
-               if (fromIdx === toIdx) return;
-               var item = saved.splice(fromIdx, 1)[0]; 
-               saved.splice(toIdx, 0, item);
-               localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
-               renderSavedQueries();
-            };
-
+            
             row.appendChild(txt);
-            row.appendChild(delBtn);
             listCont.appendChild(row);
-        });
+        }
     }
-    renderSavedQueries();
-    
-    document.getElementById('ai-save').onclick = () => {
-        var q = tx.value.trim();
-        if (!q) return;
-        var saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-        if (!saved.includes(q)) { saved.unshift(q); localStorage.setItem(STORAGE_KEY, JSON.stringify(saved)); renderSavedQueries(); }
+
+    // 8. テキストエリアの内容変更の度にローカルファイルを即時アップデート
+    tx.oninput = function() {
+        var currentKey = STORAGE_KEYS[activeDomain];
+        localStorage.setItem(currentKey, tx.value);
+        renderSavedQueries();
     };
-    document.getElementById('ai-clear').onclick = () => { tx.value = ''; };
+
+    // クエリ保存ボタンのイベント
+    document.getElementById('ai-save').onclick = function() {
+        var currentKey = STORAGE_KEYS[activeDomain];
+        localStorage.setItem(currentKey, tx.value);
+        renderSavedQueries();
+    };
+
+    // クエリクリアボタンのイベント
+    document.getElementById('ai-clear').onclick = function() {
+        tx.value = '';
+        var currentKey = STORAGE_KEYS[activeDomain];
+        localStorage.setItem(currentKey, '');
+        renderSavedQueries();
+    };
+
+    // 閉じるボタンのイベント
     document.getElementById('close-x').onclick = closePanel;
 
-        // Add this function to fetch your prompt.bin file
-    async function getPromptBin() {
-        try {
-            // Adjust the path to where your prompt.bin is actually located
-            const response = await fetch('https://muse-score-supporter-diy-jii-ii.vercel.app/prompt.bin');
-            if (!response.ok) throw new Error('Network response was not ok');
-            const text = await response.text();
-            return text.trim();
-        } catch (error) {
-            console.error("Failed to fetch prompt.bin:", error);
-            return ""; // Return empty string if file is missing
-        }
-    }
-        document.getElementById('ai-submit').onclick = async () => {
-        var raw = tx.value.trim();
-        if (!raw) return;
-        
-        var hasContext = /[#＃][Cc][Oo][Nn][Tt][Ee][Xx][Tt]/.test(raw);
-        var cleanBody = raw.replace(/[#＃][Cc][Oo][Nn][Tt][Ee][Xx][Tt]/gi, "").trim();
-
-        // サイトフィルター処理
-        var siteFilter = "";
-        var remainingLines = [];
-        cleanBody.split('\n').forEach(line => {
-            if (line.toLowerCase().startsWith('site:https://')) {
-                var url = line.substring(13).trim();
-                if (url) siteFilter += "site:" + url + " ";
-            } else { remainingLines.push(line); }
-        });
-
-        var finalBody = remainingLines.join(' ').trim();
-        var promptBin = await getPromptBin();
-        
-        var finalQ = "[QUERY:]" + finalBody;
-        if (hasContext) { finalQ += " [CONTEXT:] " + getCleanContext(); }
-        finalQ += " [INSTRUCTIONS TO BE FOLLOWED:] " + promptBin;
-
-        var domainFilter = getSiteFilter();
-        var full = (domainFilter ? domainFilter + " " : "") + (siteFilter ? siteFilter + " " : "") + finalQ;
-
-        // 文字数制限チェック（エンコード後の長さで判定）
-        var encodedFull = encodeURIComponent(full);
-        var urlLimit = 7500; 
-
-        if (encodedFull.length > urlLimit) {
-            // 長文時の手動モード
-            var msg = "The query is too long for automatic submission.\n\n" +
-                      "Would you like to:\n" +
-                      "• [OK] -> Copy everything and Paste manually (Ctrl+V) into Google.\n" +
-                      "• [Cancel] -> Stay here and shorten your query or context.";
-            
-            if (confirm(msg)) {
-                // クリップボードに書き込み
-                navigator.clipboard.writeText(full).then(() => {
-                    // Google AI 画面を立ち上げる（ご提示のパラメータを使用）
-                    const f = document.createElement('form');
-                    f.method = 'GET';
-                    f.action = 'https://www.google.com/search';
-                    f.target = '_blank';
-                    // 検索ワードは空（またはダミー）でAI画面だけ呼び出す
-                    const p = { q: 'AI Search', udm: '50', aep: '11', sourceid: 'chrome', source: 'chrome.crn.rb' };
-                    for (let k in p) {
-                        let i = document.createElement('input');
-                        i.type = 'hidden'; i.name = k; i.value = p[k];
-                        f.appendChild(i);
-                    }
-                    document.body.appendChild(f);
-                    f.submit();
-                    f.remove();
-                });
-            }
-        } else {
-            // 自動検索モード（ご提示のパラメータを使用）
-            const f = document.createElement('form');
-            f.method = 'GET';
-            f.action = 'https://www.google.com/search';
-            f.target = '_blank';
-            const p = { q: full, udm: '50', aep: '11', sourceid: 'chrome', source: 'chrome.crn.rb' };
-            for (let k in p) {
-                let i = document.createElement('input');
-                i.type = 'hidden'; i.name = k; i.value = p[k];
-                f.appendChild(i);
-            }
-            document.body.appendChild(f);
-            f.submit();
-            f.remove();
-        }
+    // AI Search送信ボタンのダミーイベント（11のプロンプト結合例）
+    document.getElementById('ai-submit').onclick = function() {
+        // 11. 送信用ヘッダーテキストを検索窓の文章の先頭に付与して送信文を構成
+        var finalPromptToSend = aiHeaderPrompt + tx.value;
+        console.log("Google AI Searchに送信するデータ:\n", finalPromptToSend);
+        alert("AI Searchを起動します（コンソールを確認してください）");
     };
-    document.getElementById('web-search').onclick = () => {
-        var raw = tx.value.trim().replace(/[#＃][Cc][Oo][Nn][Tt][Ee][Xx][Tt]/gi, "");
-        if (!raw) return;
-        var domainFilter = getSiteFilter();
-        var full = (domainFilter ? domainFilter + " " : "") + raw;
-        window.open("https://www.google.com" + "/search?q=" + encodeURIComponent(full), '_blank');
+
+    document.getElementById('web-search').onclick = function() {
+        if (!tx.value.trim()) return;
+        window.open("https://google.com" + encodeURIComponent(tx.value));
     };
+
+    // 初期起動処理
+    renderToggles();
+    renderSavedQueries();
+
 })();
