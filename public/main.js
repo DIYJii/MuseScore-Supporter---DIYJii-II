@@ -3,7 +3,7 @@
     var PANEL_ID = 'my-ai-sidebar';
     // 6つの独立した保存ファイル用キーのベース
     var STORAGE_KEY_BASE = 'musescore_saved_queries_'; 
-    var CURRENT_DOMAIN_KEY = 'musescore_active_domain';
+    var CURRENT_PROMPT_KEY = 'musescore_active_prompt';
     var MS_DARK_BLUE = '#172b4d'; 
     var MS_LIGHT_BLUE = '#eef2f7';
     var SEARCH_BLUE = '#0d47a1'; 
@@ -44,13 +44,13 @@
         return mainArea.innerText.replace(/\s+/g, ' ').trim().substring(0, 5000);
     }
 
-    // 2. 新しいDomainリスト（6つの固定カテゴリ）
-    var newDomains = [
+    // 2. 新しいPROMPTリスト（6つの固定カテゴリ）
+    var newPrompts = [
         'General', 'Subscriptions', 'Web Operations', 'Notations', 'Scores', 'TbD'
     ];
 
     // 初期起動時、または過去に保存されたアクティブなドメインを取得（デフォルトはGeneral）
-    var activeDomain = localStorage.getItem(CURRENT_DOMAIN_KEY) || 'General';
+    var activePrompt = localStorage.getItem(CURRENT_PROMPT_KEY) || 'General';
 
     var panel = document.createElement('div');
     panel.id = PANEL_ID;
@@ -77,7 +77,7 @@
             <span style="font-weight:900; color:${MS_DARK_BLUE}; font-size:22px;">MuseScore Supporter</span>
             <button id="close-x" style="cursor:pointer; border:none; background:none; font-size:28px; color:#aaa; position:absolute; right:15px;">&times;</button>
         </div>
-        <div id="domain-area" style="padding:2px 15px; background:#fff; border-bottom:1px solid #eee; flex-shrink:0;">
+        <div id="prompt-area" style="padding:2px 15px; background:#fff; border-bottom:1px solid #eee; flex-shrink:0;">
             <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:2px;" id="row-sites"></div>
         </div>
         <div id="top-area" style="padding:5px 15px; display:flex; flex-direction:column; gap:6px; flex:1; min-height:0; background:rgba(232, 245, 233, 0.4);">
@@ -107,11 +107,11 @@
 
     // 5 & 8. Vercel上の.binファイルを模したPrompt存在チェック関数 (非同期想定)
     // 実環境のAPI仕様に合わせて適宜fetch等の通信に書き換えてください。
-    async function checkVercelPromptExists(domainName) {
+    async function checkVercelPromptExists(promptName) {
         try {
             // 仮として、常に存在する（true）と仮定。検証する場合は実際のURLへfetch等を行う
-            // 例: let res = await fetch(`https://your-vercel-domain/${domainName}.bin`, { method: 'HEAD' });
-            // return res.ok;
+            let res = await fetch('https://muse-score-supporter-diy-jii-ii.vercel.app/${promptName}.bin`, { method: 'HEAD' });
+            return res.ok;
             return true; 
         } catch(e) {
             return false;
@@ -123,42 +123,42 @@
         var container = document.getElementById('row-sites');
         container.innerHTML = '';
         
-        for (let domain of newDomains) {
+        for (let prompt of newPrompts) {
             var btn = document.createElement('button');
-            btn.innerText = domain;
-            var isOn = (activeDomain === domain);
+            btn.innerText = prompt;
+            var isOn = (activePrompt === prompt);
             
             btn.style.cssText = btnBase + `height:28px; font-size:11px; margin:1px 0; background:${isOn ? MS_DARK_BLUE : MS_LIGHT_BLUE}; color:${isOn ? '#fff' : MS_DARK_BLUE}; border:1px solid ${MS_DARK_BLUE};`;
             
             // クリック時の排他トグル処理
             btn.onclick = async (e) => {
-                var targetDomain = e.target.innerText;
-                if (activeDomain === targetDomain) return; // 既にONなら何もしない
+                var targetPrompt = e.target.innerText;
+                if (activePrompt === targetPrompt) return; // 既にONなら何もしない
 
                 // 8. PromptがVercelにアップされているかチェック
-                var exists = await checkVercelPromptExists(targetDomain);
+                var exists = await checkVercelPromptExists(targetPrompt);
                 if (!exists) {
                     alert("Prompt to be defined");
                     return; // ボタンは切り替わらない
                 }
 
                 // チェック通過時のみONを切り替え
-                activeDomain = targetDomain;
-                localStorage.setItem(CURRENT_DOMAIN_KEY, activeDomain);
+                activePrompt = targetPrompt;
+                localStorage.setItem(CURRENT_PROMPT_KEY, activePrompt);
                 
                 renderToggles();
-                loadQueriesForActiveDomain(); // 7. オンになったボタンに合わせてロード
+                loadQueriesForActivePrompt(); // 7. オンになったボタンに合わせてロード
             };
             container.appendChild(btn);
         }
     }
-    // 7. オンになっているボタン（Domain）の保存キーを取得するヘルパー
+    // 7. オンになっているボタン（Prompt）の保存キーを取得するヘルパー
     function getActiveStorageKey() {
-        return STORAGE_KEY_BASE + activeDomain;
+        return STORAGE_KEY_BASE + activePrompt;
     }
 
     // 6 & 7. 連動したクエリ履歴のロードと描画処理
-    function loadQueriesForActiveDomain() {
+    function loadQueriesForActivePrompt() {
         var listCont = document.getElementById('query-list');
         listCont.innerHTML = '';
         
@@ -189,7 +189,7 @@
                 pop.querySelector('#del-yes').onclick = () => { 
                     saved.splice(idx, 1); 
                     localStorage.setItem(getActiveStorageKey(), JSON.stringify(saved)); 
-                    loadQueriesForActiveDomain(); 
+                    loadQueriesForActivePrompt(); 
                 };
                 pop.querySelector('#del-no').onclick = () => pop.remove();
                 row.appendChild(pop);
@@ -206,7 +206,7 @@
                var item = saved.splice(fromIdx, 1)[0]; 
                saved.splice(toIdx, 0, item);
                localStorage.setItem(getActiveStorageKey(), JSON.stringify(saved));
-               loadQueriesForActiveDomain();
+               loadQueriesForActivePrompt();
             };
 
             row.appendChild(txt);
@@ -217,7 +217,7 @@
 
     // 初期起動時のロード実行
     renderToggles();
-    loadQueriesForActiveDomain();
+    loadQueriesForActivePrompt();
     
     // 6. 各ドメインに紐づいた保存ボタンの処理
     document.getElementById('ai-save').onclick = () => {
@@ -228,23 +228,23 @@
         if (!saved.includes(q)) { 
             saved.unshift(q); 
             localStorage.setItem(currentKey, JSON.stringify(saved)); 
-            loadQueriesForActiveDomain(); 
+            loadQueriesForActivePrompt(); 
         }
     };
     
     document.getElementById('ai-clear').onclick = () => { tx.value = ''; };
     document.getElementById('close-x').onclick = closePanel;
 
-    // 5. 新しいDomain仕様に合わせたVercelからの.binファイル取得
+    // 5. 新しいPrompt仕様に合わせたVercelからの.binファイル取得
     async function getPromptBin() {
         try {
             // 現在アクティブなドメイン名（General等）と同名の.binファイルを取得
-            const response = await fetch(`https://vercel.app{activeDomain}.bin`);
+            const response = await fetch(`https://vercel.app{activePrompt}.bin`);
             if (!response.ok) throw new Error('Network response was not ok');
             const text = await response.text();
             return text.trim();
         } catch (error) {
-            console.error(`Failed to fetch ${activeDomain}.bin:`, error);
+            console.error(`Failed to fetch ${activePrompt}.bin:`, error);
             return ""; 
         }
     }
@@ -275,10 +275,10 @@
         
         var finalQ = "[QUERY:]" + finalBody;
         if (hasContext) { finalQ += " [CONTEXT:] " + getCleanContext(); }
-        // 4 & 10. 以前のDomain処理は排除し、環境ヘッダーを先頭に付与してPromptを結合
+        // 4 & 10. 以前のPrompt処理は排除し、環境ヘッダーを先頭に付与してPromptを結合
         finalQ += " [INSTRUCTIONS TO BE FOLLOWED:] " + envHeader + promptBin;
 
-        // 4. 今迄のDomainに関するsiteフィルター（getSiteFilter）の結合処理は削除
+        // 4. 今迄のPromptに関するsiteフィルター（getSiteFilter）の結合処理は削除
         var full = (siteFilter ? siteFilter + " " : "") + finalQ;
 
         // 文字数制限チェック（エンコード後の長さで判定）
@@ -329,7 +329,7 @@
     document.getElementById('web-search').onclick = () => {
         var raw = tx.value.trim().replace(/[#＃][Cc][Oo][Nn][Tt][Ee][Xx][Tt]/gi, "");
         if (!raw) return;
-        // 4. こちらのDomainフィルター（getSiteFilter）も同様に完全削除
+        // 4. こちらのPromptフィルター（getSiteFilter）も同様に完全削除
         window.open("https://www.google.com" + "/search?q=" + encodeURIComponent(raw), '_blank');
     };
 })();
