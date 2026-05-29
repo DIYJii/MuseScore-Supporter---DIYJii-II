@@ -239,7 +239,7 @@
     async function getPromptBin() {
         try {
             // 現在アクティブなドメイン名（General等）と同名の.binファイルを取得
-            const response = await fetch(`https://vercel.app{activePrompt}.bin`);
+            const response = await fetch(`https://muse-score-supporter-diy-jii-ii.vercel.app/{activePrompt}.bin`);
             if (!response.ok) throw new Error('Network response was not ok');
             const text = await response.text();
             return text.trim();
