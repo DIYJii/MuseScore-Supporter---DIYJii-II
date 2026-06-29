@@ -2,10 +2,7 @@
   // --- 設定値 ---
   // あなたのVercelリポジトリのベースURL（末尾にスラッシュは不要）
   var VERCEL_BASE_URL = 'https://muse-score-supporter-diy-jii-ii.vercel.app';
-  
-https://muse-score-supporter-diy-jii-ii.vercel.app/sysinstruction.pdf
-
-  var PANEL_WIDTH = '380px';
+    var PANEL_WIDTH = '380px';
   var PANEL_ID = 'my-ai-sidebar';
   
   // 6カテゴリを廃止し、すべての検索文を1つの固定キーで保存
