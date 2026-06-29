@@ -70,7 +70,7 @@
   // --- 1 & 2. VercelからSysInstruction.pdfを取得する関数 ---
   async function getSysInstruction() {
     try {
-      const response = await fetch(CERCEL_BASE_URL + '/SysInstruction.pdf');
+      const response = await fetch(VERCEL_BASE_URL + '/SysInstruction.pdf');
       if (!response.ok) throw new Error('Network response was not ok');
       const text = await response.text();
       return text.trim();
