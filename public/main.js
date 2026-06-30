@@ -211,4 +211,4 @@
         var url = line.substring(13).trim();
         if (url) siteFilter += "site:" + url + " ";
       } else { remainingLines.push(line); }
-    });
+    });)
