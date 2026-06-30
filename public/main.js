@@ -2,6 +2,7 @@
   // --- 設定値 ---
   // あなたのVercelリポジトリのベースURL（末尾にスラッシュは不要）
   var VERCEL_BASE_URL = 'https://muse-score-supporter-diy-jii-ii.vercel.app';
+
   var PANEL_WIDTH = '380px';
   var PANEL_ID = 'my-ai-sidebar';
   
@@ -191,3 +192,23 @@
       loadQueries(); 
     }
   };
+  
+  document.getElementById('ai-clear').onclick = () => { tx.value = ''; };
+  document.getElementById('close-x').onclick = closePanel;
+  
+  // AI Search 送信ボタンのメイン処理
+  document.getElementById('ai-submit').onclick = async () => {
+    var raw = tx.value.trim();
+    if (!raw) return;
+    
+    var hasContext = /[#＃][Cc][Oo][Nn][Tt][Ee][Xx][Tt]/.test(raw);
+    var cleanBody = raw.replace(/[#＃][Cc][Oo][Nn][Tt][Ee][Xx][Tt]/gi, "").trim();
+    
+    var siteFilter = "";
+    var remainingLines = [];
+    cleanBody.split('\n').forEach(line => {
+      if (line.toLowerCase().startsWith('site:https://')) {
+        var url = line.substring(13).trim();
+        if (url) siteFilter += "site:" + url + " ";
+      } else { remainingLines.push(line); }
+    });
